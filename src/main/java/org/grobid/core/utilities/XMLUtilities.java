@@ -36,7 +36,7 @@ import java.util.*;
 import static org.grobid.core.engines.DatasetParser.normalize;
 
 /**
- *  Some convenient methods for suffering a bit less with XML.
+ * Some convenient methods for suffering a bit less with XML.
  */
 public class XMLUtilities {
 
@@ -57,8 +57,8 @@ public class XMLUtilities {
             document.normalize();
             XPath xPath = XPathFactory.newInstance().newXPath();
             org.w3c.dom.NodeList nodeList = (org.w3c.dom.NodeList) xPath.evaluate("//text()[normalize-space()='']",
-                                                          document,
-                                                          XPathConstants.NODESET);
+                    document,
+                    XPathConstants.NODESET);
 
             for (int i = 0; i < nodeList.getLength(); ++i) {
                 org.w3c.dom.Node node = nodeList.item(i);
@@ -83,7 +83,7 @@ public class XMLUtilities {
     }
 
     public static Element getFirstDirectChild(Element parent, String name) {
-        for(Node child = parent.getFirstChild(); child != null; child = child.getNextSibling()) {
+        for (Node child = parent.getFirstChild(); child != null; child = child.getNextSibling()) {
             if (child instanceof Element && name.equals(child.getNodeName()))
                 return (Element) child;
         }
@@ -122,7 +122,7 @@ public class XMLUtilities {
             SAXParser p = spf.newSAXParser();
             teiXML = serialize(doc, biblStructElement);
             p.parse(new InputSource(new StringReader(teiXML)), handler);
-        } catch(Exception e) {
+        } catch (Exception e) {
             if (teiXML != null)
                 LOGGER.warn("The parsing of the biblStruct from TEI document failed for: " + teiXML);
             else
@@ -162,17 +162,18 @@ public class XMLUtilities {
         }
         return textContent.toString();
     }
+
     /**
      * @return Pair with text or null on the left and a Triple with (position, target and type)
      */
-    public static Pair<String, Map<String,Triple<OffsetPosition, String, String>>> getTextNoRefMarkersAndMarkerPositions(Element element, int globalPos) {
+    public static Pair<String, Map<String, Triple<OffsetPosition, String, String>>> getTextNoRefMarkersAndMarkerPositions(Element element, int globalPos) {
         StringBuffer buf = new StringBuffer();
         NodeList nodeChildren = element.getChildNodes();
         boolean found = false;
         int indexPos = globalPos;
 
         // map a ref string with its position and the reference key as present in the XML
-        Map<String, Triple<OffsetPosition,String, String>> right = new TreeMap<>();
+        Map<String, Triple<OffsetPosition, String, String>> right = new TreeMap<>();
 
         // the key of the reference
         String target = null;
@@ -238,7 +239,7 @@ public class XMLUtilities {
         return Pair.of(left, right);
     }
 
-    public static Pair<String,String> getLeftRightTextContent(Element current) {
+    public static Pair<String, String> getLeftRightTextContent(Element current) {
         // right text
         Node sibling = current.getNextSibling();
         while (null != sibling && sibling.getNodeType() != Node.TEXT_NODE) {
@@ -246,7 +247,7 @@ public class XMLUtilities {
         }
         String right = null;
         if (sibling != null)
-            right = ((Text)sibling).getNodeValue();
+            right = ((Text) sibling).getNodeValue();
 
         // left text
         sibling = current.getPreviousSibling();
@@ -255,7 +256,7 @@ public class XMLUtilities {
         }
         String left = null;
         if (sibling != null)
-            left = ((Text)sibling).getNodeValue();
+            left = ((Text) sibling).getNodeValue();
 
         return Pair.of(left, right);
     }
@@ -275,7 +276,7 @@ public class XMLUtilities {
                 Node emptyTextNode = emptyTextNodes.item(i);
                 emptyTextNode.getParentNode().removeChild(emptyTextNode);
             }
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
         }
 
@@ -300,7 +301,7 @@ public class XMLUtilities {
                 transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
             transformer.transform(domSource, result);
             xml = writer.toString();
-        } catch(TransformerException ex) {
+        } catch (TransformerException ex) {
             ex.printStackTrace();
         }
         return xml;
@@ -309,6 +310,7 @@ public class XMLUtilities {
 
     /**
      * Ensure that the TEI training corpus is well-formed, has unique identifiers for all
+     *
      * @xml:id in the whole corpus, and remove TEI entries with empty body.
      */
     public static void cleanXMLCorpus(String documentPath) throws Exception {
@@ -317,15 +319,15 @@ public class XMLUtilities {
 
         // we use a DOM parser
         org.w3c.dom.Document document = DocumentBuilderFactory.newInstance()
-                    .newDocumentBuilder()
-                    .parse(documentFile);
+                .newDocumentBuilder()
+                .parse(documentFile);
 
         // remove tei entries with empty body
         document.normalize();
         XPath xPath = XPathFactory.newInstance().newXPath();
         org.w3c.dom.NodeList nodeList = (org.w3c.dom.NodeList) xPath.evaluate("//tei/text/body",
-                                                      document,
-                                                      XPathConstants.NODESET);
+                document,
+                XPathConstants.NODESET);
 
         for (int i = 0; i < nodeList.getLength(); ++i) {
             org.w3c.dom.Node node = nodeList.item(i);
@@ -353,7 +355,7 @@ public class XMLUtilities {
                         //System.out.println(id);
                         // modify id
                         element.removeAttribute("id");
-                        element.setAttribute("xml:id", docId+"-"+id);
+                        element.setAttribute("xml:id", docId + "-" + id);
                     }
                 }
                 String corresp = element.getAttribute("corresp");
@@ -363,7 +365,7 @@ public class XMLUtilities {
                         //System.out.println(corresp);
                         // modify corresp
                         element.removeAttribute("corresp");
-                        element.setAttribute("corresp", "#"+docId+"-"+corresp.substring(1));
+                        element.setAttribute("corresp", "#" + docId + "-" + corresp.substring(1));
                     }
                 }
             }
@@ -387,9 +389,9 @@ public class XMLUtilities {
         // check again if everything is well-formed after the changes
         try {
             document = DocumentBuilderFactory.newInstance()
-                        .newDocumentBuilder()
-                        .parse(new InputSource(new ByteArrayInputStream(stringWriter.toString().getBytes("UTF-8"))));
-        } catch(Exception e) {
+                    .newDocumentBuilder()
+                    .parse(new InputSource(new ByteArrayInputStream(stringWriter.toString().getBytes("UTF-8"))));
+        } catch (Exception e) {
             System.out.println("Problem with the final TEI XML");
             e.printStackTrace();
         }
@@ -405,21 +407,21 @@ public class XMLUtilities {
         Node teiNode = node.getParentNode().getParentNode().getParentNode().getParentNode();
         if (teiNode != null) {
             // then we need to go down teiHeader -> fileDesc -> id
-            Element element = (Element)teiNode;
+            Element element = (Element) teiNode;
             NodeList children = element.getChildNodes();
             for (int i = 0; i < children.getLength(); i++) {
                 Node currentChild = children.item(i);
                 if (currentChild.getNodeType() == Node.ELEMENT_NODE
-                    && ((Element) currentChild).getTagName().equals("teiHeader")) {
+                        && ((Element) currentChild).getTagName().equals("teiHeader")) {
 
-                    Element element2 = (Element)currentChild;
+                    Element element2 = (Element) currentChild;
                     NodeList children2 = element2.getChildNodes();
                     for (int j = 0; j < children2.getLength(); j++) {
                         Node currentChild2 = children2.item(j);
                         if (currentChild2.getNodeType() == Node.ELEMENT_NODE
-                            && ((Element) currentChild2).getTagName().equals("fileDesc")) {
+                                && ((Element) currentChild2).getTagName().equals("fileDesc")) {
 
-                            Element element3 = (Element)currentChild2;
+                            Element element3 = (Element) currentChild2;
                             // get id attribute value
                             String id = element3.getAttribute("xml:id");
                             if (id != null && id.length() > 0)
@@ -443,11 +445,11 @@ public class XMLUtilities {
         for (int i = 0; i < in.length(); i++) {
             current = in.charAt(i); // NOTE: No IndexOutOfBoundsException caught here; it should not happen.
             if ((current == 0x9) ||
-                (current == 0xA) ||
-                (current == 0xD) ||
-                ((current >= 0x20) && (current <= 0xD7FF)) ||
-                ((current >= 0xE000) && (current <= 0xFFFD)) ||
-                ((current >= 0x10000) && (current <= 0x10FFFF)))
+                    (current == 0xA) ||
+                    (current == 0xD) ||
+                    ((current >= 0x20) && (current <= 0xD7FF)) ||
+                    ((current >= 0xE000) && (current <= 0xFFFD)) ||
+                    ((current >= 0x10000) && (current <= 0x10FFFF)))
                 out.append(current);
         }
         return out.toString();
@@ -463,13 +465,13 @@ public class XMLUtilities {
         final NodeList children = node.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
             final Node n = children.item(i);
-            if ( (n.getNodeType() == Node.ELEMENT_NODE) &&
-                 (textualElements.contains(n.getNodeName())) ) {
+            if ((n.getNodeType() == Node.ELEMENT_NODE) &&
+                    (textualElements.contains(n.getNodeName()))) {
                 // text content
                 //String text = n.getTextContent();
                 StringBuilder textBuffer = new StringBuilder();
                 NodeList childNodes = n.getChildNodes();
-                for(int y=0; y<childNodes.getLength(); y++) {
+                for (int y = 0; y < childNodes.getLength(); y++) {
                     textBuffer.append(serialize(doc, childNodes.item(y)));
                     textBuffer.append(" ");
                 }
@@ -480,7 +482,7 @@ public class XMLUtilities {
                 List<OffsetPosition> theSentenceBoundaries = null;
                 try {
                     theSentenceBoundaries = SentenceUtilities.getInstance().runSentenceDetection(text);
-                } catch(Exception e) {
+                } catch (Exception e) {
                     LOGGER.warn("The sentence segmentation failed for: " + text);
                 }
 
@@ -491,13 +493,13 @@ public class XMLUtilities {
                 // we're making a first pass to ensure that there is no element broken by the segmentation
                 List<String> sentences = new ArrayList<String>();
                 List<String> toConcatenate = new ArrayList<String>();
-                for(OffsetPosition sentPos : theSentenceBoundaries) {
+                for (OffsetPosition sentPos : theSentenceBoundaries) {
                     //System.out.println("new chunk: " + sent);
                     String sent = text.substring(sentPos.start, sentPos.end);
                     String newSent = sent;
                     if (toConcatenate.size() != 0) {
                         StringBuffer conc = new StringBuffer();
-                        for(String concat : toConcatenate) {
+                        for (String concat : toConcatenate) {
                             conc.append(concat);
                             conc.append(" ");
                         }
@@ -509,7 +511,7 @@ public class XMLUtilities {
                         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
                         factory.setNamespaceAware(true);
                         org.w3c.dom.Document d = factory.newDocumentBuilder().parse(new InputSource(new StringReader(fullSent)));
-                    } catch(Exception e) {
+                    } catch (Exception e) {
                         fail = true;
                     }
                     if (fail)
@@ -521,7 +523,7 @@ public class XMLUtilities {
                 }
 
                 List<Node> newNodes = new ArrayList<Node>();
-                for(String sent : sentences) {
+                for (String sent : sentences) {
                     //System.out.println("-----------------");
                     sent = sent.replace("\n", " ");
                     sent = sent.replaceAll("( )+", " ");
@@ -540,7 +542,7 @@ public class XMLUtilities {
                         Node newNode = doc.importNode(d.getDocumentElement(), true);
                         newNodes.add(newNode);
                         //System.out.println(serialize(doc, newNode));
-                    } catch(Exception e) {
+                    } catch (Exception e) {
 
                     }
                 }
@@ -555,12 +557,12 @@ public class XMLUtilities {
                 if (n.getNodeName().equals("figDesc")) {
                     Element theDiv = doc.createElementNS("http://www.tei-c.org/ns/1.0", "div");
                     Element theP = doc.createElementNS("http://www.tei-c.org/ns/1.0", "p");
-                    for(Node theNode : newNodes)
+                    for (Node theNode : newNodes)
                         theP.appendChild(theNode);
                     theDiv.appendChild(theP);
                     n.appendChild(theDiv);
                 } else {
-                    for(Node theNode : newNodes)
+                    for (Node theNode : newNodes)
                         n.appendChild(theNode);
                 }
 
