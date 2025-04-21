@@ -1570,11 +1570,11 @@ for(String sentence : allSentences) {
                                                                           boolean disambiguate) {
 
         Pair<List<List<Dataset>>, List<BibDataSet>> tei = null;
-        try {
+        try (StringReader reader = new StringReader(documentAsString);){
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
             DocumentBuilder builder = factory.newDocumentBuilder();
-            org.w3c.dom.Document document = builder.parse(new InputSource(new StringReader(documentAsString)));
+            org.w3c.dom.Document document = builder.parse(new InputSource(reader));
             //document.getDocumentElement().normalize();
             org.w3c.dom.Element root = document.getDocumentElement();
 
