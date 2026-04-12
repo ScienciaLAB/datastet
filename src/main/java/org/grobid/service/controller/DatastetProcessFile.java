@@ -274,7 +274,7 @@ public class DatastetProcessFile {
             if (!isResultOK(retValString)) {
                 response = Response.status(Status.NO_CONTENT).build();
             } else {
-                response = Response.status(Status.OK).entity(retValString).type(MediaType.TEXT_PLAIN).build();
+                response = Response.status(Status.OK).entity(retValString).type(MediaType.APPLICATION_JSON).build();
             }
         } catch (Exception exp) {
             LOGGER.error("An unexpected exception occurs. ", exp);
@@ -366,12 +366,7 @@ public class DatastetProcessFile {
                 if (!isResultOK(retValString)) {
                     response = Response.status(Status.NO_CONTENT).build();
                 } else {
-                    response = Response.status(Status.OK).entity(retValString).type(MediaType.TEXT_PLAIN).build();
-                    /*response = Response
-                            .ok()
-                            .type("application/json")
-                            .entity(retValString)
-                            .build();*/
+                    response = Response.status(Status.OK).entity(retValString).type(MediaType.APPLICATION_JSON).build();
                 }
             }
 
@@ -382,7 +377,8 @@ public class DatastetProcessFile {
             LOGGER.error("An unexpected exception occurs. ", exp);
             response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(exp.getMessage()).build();
         } finally {
-            IOUtilities.removeTempFile(originFile);
+            if (originFile != null)
+                IOUtilities.removeTempFile(originFile);
         }
         LOGGER.debug(methodLogOut());
         return response;
@@ -467,7 +463,7 @@ public class DatastetProcessFile {
                 if (!isResultOK(retValString)) {
                     response = Response.status(Status.NO_CONTENT).build();
                 } else {
-                    response = Response.status(Status.OK).entity(retValString).type(MediaType.TEXT_PLAIN).build();
+                    response = Response.status(Status.OK).entity(retValString).type(MediaType.APPLICATION_JSON).build();
                 }
             }
 
@@ -478,7 +474,8 @@ public class DatastetProcessFile {
             LOGGER.error("An unexpected exception occurs. ", exp);
             response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(exp.getMessage()).build();
         } finally {
-            IOUtilities.removeTempFile(originFile);
+            if (originFile != null)
+                IOUtilities.removeTempFile(originFile);
         }
         LOGGER.debug(methodLogOut());
         return response;

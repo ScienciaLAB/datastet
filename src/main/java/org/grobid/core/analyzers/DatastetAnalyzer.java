@@ -19,11 +19,10 @@ public class DatastetAnalyzer implements org.grobid.core.analyzers.Analyzer {
 
     public static DatastetAnalyzer getInstance() {
         if (instance == null) {
-            //double check idiom
-            // synchronized (instanceController) {
+            synchronized (DatastetAnalyzer.class) {
                 if (instance == null)
                     getNewInstance();
-            // }
+            }
         }
         return instance;
     }

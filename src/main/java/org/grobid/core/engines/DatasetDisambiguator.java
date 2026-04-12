@@ -187,7 +187,7 @@ public class DatasetDisambiguator {
                 LOGGER.debug("Calling: " + url.toString());
 //System.out.println("Calling: " + url.toString());
                 // load the dataset customisation
-                File cutomisationFile = new File("resources/config/customisation-software.json");
+                File cutomisationFile = new File("resources/config/customisation-dataset.json");
                 cutomisationFile = new File(cutomisationFile.getAbsolutePath());
 
                 String json = FileUtils.readFileToString(cutomisationFile, "UTF-8");
