@@ -92,7 +92,7 @@ public class XMLUtilities {
 
     public static Element getLastDirectChild(Element parent, String name) {
         NodeList children = parent.getChildNodes();
-        for(int j=children.getLength()-1; j>0; j--) {
+        for(int j=children.getLength()-1; j>=0; j--) {
             Node child = children.item(j);
             if (child instanceof Element && name.equals(child.getNodeName()))
                 return (Element) child;
@@ -192,30 +192,27 @@ public class XMLUtilities {
                     }
 
                     // get the ref marker text
-                    NodeList list2 = node.getChildNodes();
-                    for (int j = 0; j < list2.getLength(); j++) {
-                        Node subChildNode = list2.item(j);
-                        if (subChildNode.getNodeType() == Node.TEXT_NODE) {
-                            String chunk = normalize(getTextRecursively(node));
+                    String refFullText = normalize(getTextRecursively(node));
+                    if (refFullText != null && !refFullText.isEmpty()) {
+                        String chunk = refFullText;
 
-                            if (BIBLIO_CALLOUT_TYPE.equals(((Element) node).getAttribute("type"))) {
-                                Triple<OffsetPosition, String, String> refInfo = Triple.of(new OffsetPosition(indexPos, indexPos+chunk.length()), target, BIBLIO_CALLOUT_TYPE);
-                                right.put(StringUtils.strip(chunk), refInfo);
-                                String holder = StringUtils.repeat(" ", chunk.length());
-                                buf.append(holder);
-                            } else if (URI_TYPE.equals(((Element) node).getAttribute("type")) || URL_TYPE.equals(((Element) node).getAttribute("type"))) {
-                                org.apache.commons.lang3.tuple.Triple<OffsetPosition, String, String> urlInfo = org.apache.commons.lang3.tuple.Triple.of(new OffsetPosition(indexPos, indexPos+chunk.length()), target, URL_TYPE);
-                                right.put(StringUtils.strip(chunk), urlInfo);
-                                // we still add added like normal text
-                                buf.append(chunk);
-                                found = true;
-                            } else {
-                                // other ref are filtered out
-                                String holder = StringUtils.repeat(" ", chunk.length());
-                                buf.append(holder);
-                            }
-                            indexPos += chunk.length();
+                        if (BIBLIO_CALLOUT_TYPE.equals(((Element) node).getAttribute("type"))) {
+                            Triple<OffsetPosition, String, String> refInfo = Triple.of(new OffsetPosition(indexPos, indexPos+chunk.length()), target, BIBLIO_CALLOUT_TYPE);
+                            right.put(StringUtils.strip(chunk), refInfo);
+                            String holder = StringUtils.repeat(" ", chunk.length());
+                            buf.append(holder);
+                        } else if (URI_TYPE.equals(((Element) node).getAttribute("type")) || URL_TYPE.equals(((Element) node).getAttribute("type"))) {
+                            org.apache.commons.lang3.tuple.Triple<OffsetPosition, String, String> urlInfo = org.apache.commons.lang3.tuple.Triple.of(new OffsetPosition(indexPos, indexPos+chunk.length()), target, URL_TYPE);
+                            right.put(StringUtils.strip(chunk), urlInfo);
+                            // we still add added like normal text
+                            buf.append(chunk);
+                            found = true;
+                        } else {
+                            // other ref are filtered out
+                            String holder = StringUtils.repeat(" ", chunk.length());
+                            buf.append(holder);
                         }
+                        indexPos += chunk.length();
                     }
                 } else {
                     // get the text recursively
@@ -485,6 +482,10 @@ public class XMLUtilities {
                     theSentenceBoundaries = SentenceUtilities.getInstance().runSentenceDetection(text);
                 } catch(Exception e) {
                     LOGGER.warn("The sentence segmentation failed for: " + text);
+                }
+
+                if (theSentenceBoundaries == null || theSentenceBoundaries.isEmpty()) {
+                    continue;
                 }
 
                 // we're making a first pass to ensure that there is no element broken by the segmentation

@@ -79,16 +79,13 @@ public class DatasetParser extends AbstractParser {
 
     public static DatasetParser getInstance(DatastetConfiguration configuration) {
         if (instance == null) {
-            getNewInstance(configuration);
+            synchronized (DatasetParser.class) {
+                if (instance == null) {
+                    instance = new DatasetParser(configuration);
+                }
+            }
         }
         return instance;
-    }
-
-    /**
-     * Create a new instance.
-     */
-    private static synchronized void getNewInstance(DatastetConfiguration configuration) {
-        instance = new DatasetParser(configuration);
     }
 
     protected DatasetParser(GrobidModel model) {
@@ -1613,6 +1610,7 @@ for(String sentence : allSentences) {
                 DatasetDocumentSequence localSequence = new DatasetDocumentSequence(normalizedText, titleId);
                 localSequence.setRelevantSectionsNamedDatasets(false);
                 localSequence.setRelevantSectionsImplicitDatasets(false);
+                selectedSequences.add(localSequence);
             }
 
         } catch (XPathExpressionException e) {
@@ -2011,11 +2009,9 @@ for(String sentence : allSentences) {
                 Pair<String, org.w3c.dom.Node> referenceInformation = referenceMap.get(biblioComponentWrapper.getRefKey(target));
                 if (referenceInformation != null) {
                     BiblioItem biblioItem = XMLUtilities.parseTEIBiblioItem(doc, (org.w3c.dom.Element) referenceInformation.getRight());
-                    String refTextClean = refText.replaceAll("[\\[\\], ]+", "");
-
-                    biblioRefMap.put(refTextClean, biblioItem);
 
                     Integer refKey = biblioComponentWrapper.getRefKey(target);
+                    biblioRefMap.put(String.valueOf(refKey), biblioItem);
                     BiblioComponent biblioComponent = new BiblioComponent(
                             biblioItem, refKey
                     );
@@ -2087,6 +2083,9 @@ for(String sentence : allSentences) {
             List<Dataset> localDatasets = entities.get(i);
             if (CollectionUtils.isEmpty(localDatasets)) {
                 continue;
+            }
+            if (i >= dataseerClassificationResults.size()) {
+                break;
             }
             for (Dataset localDataset : localDatasets) {
                 if (localDataset == null) {
@@ -2248,7 +2247,7 @@ for(String sentence : allSentences) {
 
         // mark datasets present in Data Availability section(s)
         if (CollectionUtils.isNotEmpty(availabilitySequences)) {
-            List<LayoutToken> availabilityTokens = availabilitySequences.stream().flatMap(as -> as.getTokens().stream()).toList();
+            List<LayoutToken> availabilityTokens = availabilitySequences.stream().flatMap(as -> as.getTokens().stream()).collect(Collectors.toList());
             entities = markDAS(entities, availabilityTokens);
         }
 
