@@ -340,7 +340,6 @@ task installModels(dependsOn: [downloadModelsGit]){
             "context_shared_bert",
             "context_used_bert",
             "datasets-BERT_CRF",
-            "dataseer",
             "dataseer-binary_bert",
             "dataseer-first_bert",
             "dataseer-reuse_bert"
@@ -366,81 +365,6 @@ wrapper {
 
 ///////////////////////////
 // train and eval ML models
-
-// Run like this: ./gradlew train_dataseer -PgH=/path/grobid/home
-task(train_dataseer, dependsOn: 'classes', type: JavaExec, group: 'training') {
-    mainClass = 'org.grobid.trainer.DataseerTrainerRunner'
-    classpath = sourceSets.main.runtimeClasspath
-    args '0', 'dataseer', getArg('gH', '../grobid-home'), getArg('t', '0')
-    if (JavaVersion.current().compareTo(JavaVersion.VERSION_1_8) > 0) {
-        jvmArgs '-Xmx3072m', "--add-opens", "java.base/java.lang=ALL-UNNAMED"
-    } else {
-        jvmArgs '-Xmx3072m'
-    }
-    systemProperty "java.library.path", "${System.getProperty('java.library.path')}:" + getJavaLibraryPath()
-}
-
-// Run like this: ./gradlew train_dataseer -PgH=/path/grobid/home
-//task(train_dataseer, dependsOn: 'classes', type: JavaExec, group: 'training') {
-//    mainClass = 'org.grobid.trainer.DataseerTrainer'
-//    classpath = sourceSets.main.runtimeClasspath
-//    args '0', 'dataseer', getArg('gH', '../grobid-home'), getArg('b', ''),
-//    jvmArgs '-Xms2g', '-Xmx8g'
-//}
-
-// Run like this: ./gradlew eval_dataseer -PgH=/path/grobid/home
-task(eval_dataseer, dependsOn: 'classes', type: JavaExec, group: 'evaluation') {
-    mainClass = 'org.grobid.trainer.DataseerTrainerRunner'
-    classpath = sourceSets.main.runtimeClasspath
-    args '1', 'dataseer', getArg('gH', '../grobid-home')
-    if (JavaVersion.current().compareTo(JavaVersion.VERSION_1_8) > 0) {
-        jvmArgs '-Xmx3072m', "--add-opens", "java.base/java.lang=ALL-UNNAMED"
-    } else {
-        jvmArgs '-Xmx3072m'
-    }
-    systemProperty "java.library.path", "${System.getProperty('java.library.path')}:" + getJavaLibraryPath()
-//    jvmArgs '-Xms2g', '-Xmx8g'
-}
-
-// Run like this: ./gradlew eval_dataseer_split -PgH=/path/grobid/home -Ps=0.8 -Pt=10
-task(eval_dataseer_split, dependsOn: 'classes', type: JavaExec, group: 'evaluation') {
-    mainClass = 'org.grobid.trainer.DataseerTrainerRunner'
-    classpath = sourceSets.main.runtimeClasspath
-    args '2', 'dataseer', getArg('gH', '../grobid-home'), getArg('s', 0.9), getArg('t', '0')
-    //jvmArgs '-Xms2g', '-Xmx8g'
-    if (JavaVersion.current().compareTo(JavaVersion.VERSION_1_8) > 0) {
-        jvmArgs '-Xms2g', '-Xmx8g', "--add-opens", "java.base/java.lang=ALL-UNNAMED"
-    } else {
-        jvmArgs '-Xms2g', '-Xmx8g'
-    }
-    systemProperty "java.library.path", "${System.getProperty('java.library.path')}:" + getJavaLibraryPath()
-}
-
-// Run like this: ./gradlew eval_dataseer_nfold -PgH=/path/grobid/home -Pt=10
-task(eval_dataseer_nfold, dependsOn: 'classes', type: JavaExec, group: 'evaluation') {
-    mainClass = 'org.grobid.trainer.DataseerTrainerRunner'
-    classpath = sourceSets.main.runtimeClasspath
-    args '3', 'dataseer', getArg('gH', '../grobid-home'), getArg('n', 10), getArg('t', '0')
-    if (JavaVersion.current().compareTo(JavaVersion.VERSION_1_8) > 0) {
-        jvmArgs '-Xms2g', '-Xmx8g', "--add-opens", "java.base/java.lang=ALL-UNNAMED"
-    } else {
-        jvmArgs '-Xms2g', '-Xmx8g'
-    }
-    systemProperty "java.library.path", "${System.getProperty('java.library.path')}:" + getJavaLibraryPath()
-}
-
-// Run like this: ./gradlew annotated_corpus_generator_csv -Pfull=/path/input/fulltext -Ppdf=/path/input/pdf -Pcsv=/path/csv -Pxml=/output/directory
-task(annotated_corpus_generator_csv, dependsOn: 'classes', type: JavaExec, group: 'import') {
-    mainClass = 'org.grobid.trainer.AnnotatedCorpusGeneratorCSV'
-    classpath = sourceSets.main.runtimeClasspath
-    args getArg('full', ''), getArg('pdf', ''), getArg('csv', ''), getArg('xml', 'resources/dataset/dataseer/corpus/')
-    if (JavaVersion.current().compareTo(JavaVersion.VERSION_1_8) > 0) {
-        jvmArgs '-Xms2g', '-Xmx8g', "--add-opens", "java.base/java.lang=ALL-UNNAMED"
-    } else {
-        jvmArgs '-Xms2g', '-Xmx8g'
-    }
-    systemProperty "java.library.path", "${System.getProperty('java.library.path')}:" + getJavaLibraryPath()
-}
 
 //////////
 // service

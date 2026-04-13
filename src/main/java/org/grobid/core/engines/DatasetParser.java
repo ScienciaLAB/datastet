@@ -77,7 +77,7 @@ public class DatasetParser extends AbstractParser {
 
     private EngineParsers parsers;
     private DatastetServiceConfiguration datastetConfiguration;
-    private DataseerClassifier dataseerClassifier;
+    private DataTypeClassifier dataTypeClassifier;
     private DatasetContextClassifier datasetContextClassifier;
     private DatasetDisambiguator disambiguator;
 
@@ -606,17 +606,17 @@ System.out.println(localDatasetcomponent.toJson());
         }
     }
 
-    private List<DataseerResults> classifyWithDataseerClassifier(List<String> allSentences) {
+    private List<DataTypeResults> dataTypeClassify(List<String> allSentences) {
         // pre-process classification of every sentence in batch
-        if (this.dataseerClassifier == null)
-            dataseerClassifier = DataseerClassifier.getInstance(this.datastetConfiguration.getDatastetConfiguration());
+        if (this.dataTypeClassifier == null)
+            dataTypeClassifier = DataTypeClassifier.getInstance();
 
         int totalClassificationNodes = 0;
 
-        List<DataseerResults> results = new ArrayList<>();
+        List<DataTypeResults> results = new ArrayList<>();
 
         try {
-            String jsonClassification = dataseerClassifier.classify(allSentences);
+            String jsonClassification = dataTypeClassifier.classify(allSentences);
             //System.out.println(jsonClassification);
 
             //List<Boolean> hasDatasets = new ArrayList<>();
@@ -661,7 +661,7 @@ System.out.println(localDatasetcomponent.toJson());
                             }
                         }
 
-                        results.add(new DataseerResults(bestScore, hasDatasetScore, bestType));
+                        results.add(new DataTypeResults(bestScore, hasDatasetScore, bestType));
 
                         totalClassificationNodes++;
                     }
@@ -1183,12 +1183,7 @@ System.out.println(localDatasetcomponent.toJson());
             //System.out.println("mapSentencesToZones size: " + mapSentencesToZones.size());
             //System.out.println("relevantSections size: " + relevantSectionsNamedDatasets.size());
 
-            List<DataseerResults> results = classifyWithDataseerClassifier(allSentences);
-
-            //System.out.println("total data sentence classifications: " + totalClassificationNodes);
-            //System.out.println("bestTypes size: " + bestTypes.size());
-            //System.out.println("bestScores size: " + bestScores.size());
-            //System.out.println("hasDatasetScores size: " + hasDatasetScores.size());
+            List<DataTypeResults> results = dataTypeClassify(allSentences);
 
             int i = 0;
             for (List<Dataset> localDatasets : entities) {
@@ -1200,7 +1195,7 @@ System.out.println(localDatasetcomponent.toJson());
                     if (localDataset == null) {
                         continue;
                     }
-                    DataseerResults result = results.get(i);
+                    DataTypeResults result = results.get(i);
 
                     if (localDataset.getType() == DatasetType.DATASET && (result.getBestType() != null) && localDataset.getDataset() != null) {
                         localDataset.getDataset().setBestDataType(result.getBestType());
@@ -2090,7 +2085,7 @@ for(String sentence : allSentences) {
 
         // TODO make sure that selectedSequences == allSentences above in the processPDF?
         List<String> allSentences = selectedSequences.stream().map(DatasetDocumentSequence::getText).collect(Collectors.toList());
-        List<DataseerResults> dataseerClassificationResults = classifyWithDataseerClassifier(allSentences);
+        List<DataTypeResults> dataTypeClassificationResults = dataTypeClassify(allSentences);
 
         for (int i = 0; i < entities.size(); i++) {
             List<Dataset> localDatasets = entities.get(i);
@@ -2104,7 +2099,7 @@ for(String sentence : allSentences) {
                 if (localDataset == null) {
                     continue;
                 }
-                DataseerResults result = dataseerClassificationResults.get(i);
+                DataTypeResults result = dataTypeClassificationResults.get(i);
 
                 if (localDataset.getType() == DatasetType.DATASET && (result.getBestType() != null) && localDataset.getDataset() != null) {
                     localDataset.getDataset().setBestDataType(result.getBestType());

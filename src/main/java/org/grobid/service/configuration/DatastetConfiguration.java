@@ -71,8 +71,8 @@ public class DatastetConfiguration {
     }
 
     public ModelParameters getModel() {
-        // by default return the dataseer sequence labeling model
-        return getModel("dataseer");
+        // by default return the datasets sequence labeling model
+        return getModel("datasets");
     }
 
     public ModelParameters getModel(String modelName) {

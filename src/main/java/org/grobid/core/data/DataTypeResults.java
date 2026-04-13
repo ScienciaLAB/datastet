@@ -1,11 +1,11 @@
 package org.grobid.core.data;
 
-public class DataseerResults {
+public class DataTypeResults {
     Double bestScore;
     Double hasDatasetScore;
     String bestType;
 
-    public DataseerResults(Double bestScore, Double hasDatasetScore, String bestType) {
+    public DataTypeResults(Double bestScore, Double hasDatasetScore, String bestType) {
         this.bestScore = bestScore;
         this.hasDatasetScore = hasDatasetScore;
         this.bestType = bestType;

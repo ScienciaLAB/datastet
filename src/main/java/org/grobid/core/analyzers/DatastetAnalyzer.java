@@ -141,5 +141,4 @@ public class DatastetAnalyzer implements org.grobid.core.analyzers.Analyzer {
     public List<String> retokenizeSubdigits(List<java.lang.String> tokens) {
         return retokenize(tokens);
     }
-
 }
