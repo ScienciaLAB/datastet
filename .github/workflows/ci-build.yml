@@ -2,7 +2,7 @@ name: Build unstable
 
 on: [push]
 
-concurrency: 
+concurrency:
   group: gradle
 #  cancel-in-progress: true
 
@@ -13,10 +13,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up JDK 17
+    - name: Set up JDK 21
       uses: actions/setup-java@v4
       with:
-        java-version: '17.0.10+7'
+        java-version: '21'
         distribution: 'temurin'
         cache: 'gradle'
     - name: Build with Gradle
@@ -43,17 +43,17 @@ jobs:
           sudo rm -rf "/usr/local/share/boost"
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
           sudo rm -rf /opt/hostedtoolcache
-          sudo rm -rf /opt/google/chrome 
-          sudo rm -rf /opt/microsoft/msedge 
-          sudo rm -rf /opt/microsoft/powershell 
-          sudo rm -rf /opt/pipx 
-          sudo rm -rf /usr/lib/mono 
-          sudo rm -rf /usr/local/julia* 
-          sudo rm -rf /usr/local/lib/android 
-          sudo rm -rf /usr/local/lib/node_modules 
-          sudo rm -rf /usr/local/share/chromium 
-          sudo rm -rf /usr/local/share/powershell 
-          sudo rm -rf /usr/share/dotnet 
+          sudo rm -rf /opt/google/chrome
+          sudo rm -rf /opt/microsoft/msedge
+          sudo rm -rf /opt/microsoft/powershell
+          sudo rm -rf /opt/pipx
+          sudo rm -rf /usr/lib/mono
+          sudo rm -rf /usr/local/julia*
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/local/lib/node_modules
+          sudo rm -rf /usr/local/share/chromium
+          sudo rm -rf /usr/local/share/powershell
+          sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/share/swift
       - uses: actions/checkout@v4
       - name: Build and push
@@ -69,3 +69,19 @@ jobs:
           tags: latest-develop
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
+
+  deploy-hf-spaces:
+    needs: [ docker-build ]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Restart HuggingFace Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          curl -s -X POST \
+            "https://huggingface.co/api/spaces/lfoppiano/datastet-dev/restart" \
+            -H "Authorization: Bearer $HF_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{"factory_reboot": true}'

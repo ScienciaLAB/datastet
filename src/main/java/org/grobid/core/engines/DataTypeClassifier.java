@@ -24,6 +24,7 @@ import java.util.*;
  */
 public class DataTypeClassifier {
     private static final Logger logger = LoggerFactory.getLogger(DataTypeClassifier.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private static volatile DataTypeClassifier instance;
 
@@ -124,7 +125,6 @@ public class DataTypeClassifier {
         if (CollectionUtils.isEmpty(texts))
             return null;
         logger.info("classify: " + texts.size() + " sentence(s)");
-        ObjectMapper mapper = new ObjectMapper();
 
         String the_json = classifierBinary.classify(texts);
         // first pass to select texts to be cascaded to next level
@@ -267,7 +267,6 @@ public class DataTypeClassifier {
         if (texts == null || texts.size() == 0)
             return null;
         logger.info("classify: " + texts.size() + " sentence(s)");
-        ObjectMapper mapper = new ObjectMapper();
 
         String the_json = classifierBinary.classify(texts);
         JsonNode root = null;
@@ -305,7 +304,6 @@ public class DataTypeClassifier {
         if (texts == null || texts.size() == 0)
             return null;
         logger.info("classify: " + texts.size() + " sentence(s)");
-        ObjectMapper mapper = new ObjectMapper();
 
         JsonNode rootCascaded = null;
         String cascaded_json = classifierFirstLevel.classify(texts);
