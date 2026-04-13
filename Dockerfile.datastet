@@ -2,7 +2,7 @@
 # build builder image
 # -------------------
 
-FROM openjdk:17-jdk-slim as builder
+FROM eclipse-temurin:21-jdk-jammy AS builder
 
 USER root
 
@@ -50,7 +50,7 @@ RUN wget https://github.com/kermitt2/Pub2TEI/archive/refs/heads/master.zip && \
 # build runtime image
 # -------------------
 
-FROM lfoppiano/grobid:0.8.2-full as runtime
+FROM lfoppiano/grobid:0.9.0-full AS runtime
 
 # setting locale is likely useless but to be sure
 ENV LANG C.UTF-8
@@ -88,7 +88,7 @@ VOLUME ["/opt/grobid/grobid-home/tmp"]
 
 ARG GROBID_VERSION
 ENV GROBID_VERSION=${GROBID_VERSION:-latest}
-ENV DATASTET_OPTS "-Djava.library.path=/opt/grobid/grobid-home/lib/lin-64:/usr/local/lib/python3.8/dist-packages/jep --add-opens java.base/java.lang=ALL-UNNAMED"
+ENV DATASTET_OPTS "-Djava.library.path=/opt/grobid/grobid-home/lib/lin-64:/opt/grobid/grobid-home/lib/lin-64/jep --add-opens java.base/java.lang=ALL-UNNAMED"
 
 
 CMD ["./datastet/bin/datastet", "server", "datastet/resources/config/config.yml"]
