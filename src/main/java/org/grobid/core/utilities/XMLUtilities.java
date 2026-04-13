@@ -263,19 +263,22 @@ public class XMLUtilities {
     }
 
     public static String serialize(org.w3c.dom.Document doc, Node node) {
-        // to avoid issues with space reamining from deleted nodes
+        // to avoid issues with space remaining from deleted nodes
         try {
-            XPathFactory xpathFactory = XPathFactory.newInstance();
-            // XPath to find empty text nodes.
-            XPathExpression xpathExp = xpathFactory.newXPath().compile(
-                    "//text()[normalize-space(.) = '']");
-            NodeList emptyTextNodes = (NodeList)
-                    xpathExp.evaluate(node, XPathConstants.NODESET);
+            Object evalContext = (node != null) ? node : doc;
+            if (evalContext != null) {
+                XPathFactory xpathFactory = XPathFactory.newInstance();
+                // XPath to find empty text nodes.
+                XPathExpression xpathExp = xpathFactory.newXPath().compile(
+                        "//text()[normalize-space(.) = '']");
+                NodeList emptyTextNodes = (NodeList)
+                        xpathExp.evaluate(evalContext, XPathConstants.NODESET);
 
-            // Remove each empty text node from document.
-            for (int i = 0; i < emptyTextNodes.getLength(); i++) {
-                Node emptyTextNode = emptyTextNodes.item(i);
-                emptyTextNode.getParentNode().removeChild(emptyTextNode);
+                // Remove each empty text node from document.
+                for (int i = 0; i < emptyTextNodes.getLength(); i++) {
+                    Node emptyTextNode = emptyTextNodes.item(i);
+                    emptyTextNode.getParentNode().removeChild(emptyTextNode);
+                }
             }
         } catch (Exception ex) {
             ex.printStackTrace();
