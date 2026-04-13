@@ -32,6 +32,7 @@ import java.util.*;
 @Singleton
 public class DatasetContextClassifier {
     private static final Logger LOGGER = LoggerFactory.getLogger(DatasetContextClassifier.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     // we can use either one single multi-label (over 3 classes) classifier or 3 binary classifiers
 
@@ -178,7 +179,6 @@ public class DatasetContextClassifier {
 
         // set resulting context classes to entity mentions
         try {
-            ObjectMapper mapper = new ObjectMapper();
             JsonNode root = mapper.readTree(results);
 
             int entityRank = 0;
@@ -312,7 +312,6 @@ public class DatasetContextClassifier {
             if (results.get(i) == null)
                 continue;
             try {
-                ObjectMapper mapper = new ObjectMapper();
                 JsonNode root = mapper.readTree(results.get(i));
 
                 int entityRank = 0;

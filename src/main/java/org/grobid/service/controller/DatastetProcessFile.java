@@ -11,6 +11,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.grobid.core.data.BibDataSet;
 import org.grobid.core.data.Dataset;
 import org.grobid.core.document.Document;
+import org.grobid.core.document.DocumentSource;
 import org.grobid.core.engines.DataTypeClassifier;
 import org.grobid.core.engines.DatasetParser;
 import org.grobid.core.layout.Page;
@@ -70,9 +71,9 @@ public class DatastetProcessFile {
     public Response processDatasetPDF(final InputStream inputStream,
                                       boolean disambiguate) {
         LOGGER.debug(methodLogIn());
-        String retVal = null;
         Response response = null;
         File originFile = null;
+        Pair<List<List<Dataset>>, Document> extractedResults = null;
 
         try {
             ObjectMapper mapper = new ObjectMapper();
@@ -91,7 +92,7 @@ public class DatastetProcessFile {
 
             long start = System.currentTimeMillis();
             // starts conversion process
-            Pair<List<List<Dataset>>, Document> extractedResults = this.datasetParser.processPDF(originFile, disambiguate);
+            extractedResults = this.datasetParser.processPDF(originFile, disambiguate);
 
             StringBuilder json = new StringBuilder();
             json.append("{ ");
@@ -154,6 +155,9 @@ public class DatastetProcessFile {
             LOGGER.error("An unexpected exception occurs. ", exp);
             response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(exp.getMessage()).build();
         } finally {
+            if (extractedResults != null && extractedResults.getRight() != null) {
+                DocumentSource.close(extractedResults.getRight().getDocumentSource(), true, true, true);
+            }
             if (originFile != null)
                 IOUtilities.removeTempFile(originFile);
         }
