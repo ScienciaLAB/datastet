@@ -275,7 +275,7 @@ public class DatastetProcessFile {
             if (!isResultOK(retValString)) {
                 response = Response.status(Response.Status.NO_CONTENT).build();
             } else {
-                response = Response.status(Status.OK).entity(retValString).type(MediaType.APPLICATION_JSON).build();
+                response = Response.status(Response.Status.OK).entity(retValString).type(MediaType.APPLICATION_JSON).build();
             }
         } catch (Exception exp) {
             LOGGER.error("An unexpected exception occurs. ", exp);
@@ -364,7 +364,7 @@ public class DatastetProcessFile {
                 if (!isResultOK(retValString)) {
                     response = Response.status(Response.Status.NO_CONTENT).build();
                 } else {
-                    response = Response.status(Status.OK).entity(retValString).type(MediaType.APPLICATION_JSON).build();
+                    response = Response.status(Response.Status.OK).entity(retValString).type(MediaType.APPLICATION_JSON).build();
                 }
             }
 
@@ -460,7 +460,7 @@ public class DatastetProcessFile {
                 if (!isResultOK(retValString)) {
                     response = Response.status(Response.Status.NO_CONTENT).build();
                 } else {
-                    response = Response.status(Status.OK).entity(retValString).type(MediaType.APPLICATION_JSON).build();
+                    response = Response.status(Response.Status.OK).entity(retValString).type(MediaType.APPLICATION_JSON).build();
                 }
             }
 

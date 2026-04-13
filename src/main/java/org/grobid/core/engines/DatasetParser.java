@@ -12,6 +12,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.grobid.core.GrobidModel;
 import org.grobid.core.GrobidModels;
 import org.grobid.core.analyzers.DatastetAnalyzer;
 import org.grobid.core.data.*;
@@ -102,7 +103,7 @@ public class DatasetParser extends AbstractParser {
         super(model);
     }
 
-    private DatasetParser(DatastetConfiguration configuration) {
+    private DatasetParser(DatastetServiceConfiguration configuration) {
         super(DatasetModels.DATASET, CntManagerFactory.getCntManager(),
                 GrobidCRFEngine.valueOf(configuration.getDatastetConfiguration().getModel("datasets").engine.toUpperCase()),
                 configuration.getDatastetConfiguration().getModel("datasets").delft.architecture);
