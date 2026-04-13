@@ -74,7 +74,8 @@ public class DatasetParserIntegrationTest {
             texts.add(text);
         }
 
-        List<List<Dataset>> results = null;//DatasetParser.getInstance(configuration).processingStrings(texts, false);
+        // TODO: Needs Guice context to instantiate - DatasetParser.getInstance() now requires DI dependencies
+        List<List<Dataset>> results = null;
         StringBuilder json = new StringBuilder();
 
         int i = 0;
