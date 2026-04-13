@@ -1,26 +1,26 @@
 package org.grobid.service.controller;
 
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
+import java.util.List;
+import java.util.NoSuchElementException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.io.*;
+import java.lang.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
+ * 
  * @author Patrice
+ * 
  */
 public class DatastetDataTypeService {
 
@@ -53,9 +53,9 @@ public class DatastetDataTypeService {
         if (!jsonFile.exists())
             jsonDataTypeResource = null;
         else {
-            try {
+            try {  
                 this.jsonDataTypeResource = FileUtils.readFileToString(jsonFile, StandardCharsets.UTF_8);
-            } catch (Exception e) {
+            } catch(Exception e) {
                 LOGGER.warn("Data type json file cannot be read", e);
             }
         }
@@ -67,7 +67,7 @@ public class DatastetDataTypeService {
         if (jsonDataTypeResource == null)
             return getResyncJsonDataTypes();
         // if the json resource file is not available, we need to sync it 
-        return Response.status(Response.Status.OK).entity(jsonDataTypeResource).type(MediaType.APPLICATION_JSON).build();
+        return Response.status(Status.OK).entity(jsonDataTypeResource).type(MediaType.APPLICATION_JSON).build();
     }
 
     public Response getResyncJsonDataTypes() {
@@ -94,15 +94,15 @@ public class DatastetDataTypeService {
             int exitCode = process.waitFor();
             long end = System.currentTimeMillis();
             LOGGER.info("Exit code : " + exitCode);
-            LOGGER.info("Sync with online DataSeer wiki made in " + ((end - start) / 1000) + " seconds");
+            LOGGER.info("Sync with online DataSeer wiki made in " + ((end - start)/1000) + " seconds");
 
-            if (builder.length() > 0)
+            if (builder.length()>0)
                 jsonDataTypeResource = builder.toString();
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        } 
 
-        return Response.status(Response.Status.OK).entity(jsonDataTypeResource).type(MediaType.APPLICATION_JSON).build();
+        return Response.status(Status.OK).entity(jsonDataTypeResource).type(MediaType.APPLICATION_JSON).build();
     }
 
     public Response getResyncThreadedJsonDataTypes() {
@@ -128,17 +128,17 @@ public class DatastetDataTypeService {
             while (!pool.isTerminated()) {
                 Thread.sleep(1000);
             }
-
+            
             List<String> result = future.get();
-            for (String line : result) {
+            for(String line : result) {
                 builder.append(line);
                 builder.append(System.getProperty("line.separator"));
             }
 
             long theEnd = System.currentTimeMillis();
-            LOGGER.info("Sync with online DataSeer wiki made in " + ((theEnd - theStart) / 1000) + " milliseconds");
+            LOGGER.info("Sync with online DataSeer wiki made in " + ((theEnd - theStart)/1000) + " milliseconds");
 
-            if (builder.length() > 0)
+            if (builder.length()>0)
                 jsonDataTypeResource = builder.toString();
         } catch (Exception e) {
             e.printStackTrace();
@@ -146,7 +146,7 @@ public class DatastetDataTypeService {
             pool.shutdown();
         }
 
-        return Response.status(Response.Status.OK).entity(jsonDataTypeResource).type(MediaType.APPLICATION_JSON).build();
+        return Response.status(Status.OK).entity(jsonDataTypeResource).type(MediaType.APPLICATION_JSON).build();
     }
 
     private static class ProcessReadTask implements Callable<List<String>> {
@@ -160,8 +160,8 @@ public class DatastetDataTypeService {
         @Override
         public List<String> call() {
             return new BufferedReader(new InputStreamReader(inputStream))
-                    .lines()
-                    .collect(Collectors.toList());
+                .lines()
+                .collect(Collectors.toList());
         }
     }
 

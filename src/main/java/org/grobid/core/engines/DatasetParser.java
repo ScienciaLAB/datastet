@@ -83,7 +83,7 @@ public class DatasetParser extends AbstractParser {
 
     public static DatasetParser getInstance(
             DatastetServiceConfiguration configuration,
-            DataseerClassifier dataseerClassifier,
+            DataTypeClassifier dataTypeClassifier,
             DatasetContextClassifier datasetContextClassifier,
             DatasetDisambiguator disambiguator
     ) {
@@ -108,7 +108,7 @@ public class DatasetParser extends AbstractParser {
                 GrobidCRFEngine.valueOf(configuration.getDatastetConfiguration().getModel("datasets").engine.toUpperCase()),
                 configuration.getDatastetConfiguration().getModel("datasets").delft.architecture);
 
-        this.dataseerClassifier = dataseerClassifier;
+        this.dataTypeClassifier = dataTypeClassifier;
         DatastetLexicon.getInstance();
         this.parsers = new EngineParsers();
         this.datastetConfiguration = configuration;
@@ -1185,6 +1185,11 @@ System.out.println(localDatasetcomponent.toJson());
 
             List<DataTypeResults> results = dataTypeClassify(allSentences);
 
+            //System.out.println("total data sentence classifications: " + totalClassificationNodes);
+            //System.out.println("bestTypes size: " + bestTypes.size());
+            //System.out.println("bestScores size: " + bestScores.size());
+            //System.out.println("hasDatasetScores size: " + hasDatasetScores.size());
+
             int i = 0;
             for (List<Dataset> localDatasets : entities) {
                 if (CollectionUtils.isEmpty(localDatasets)) {
@@ -1535,10 +1540,10 @@ for(String sentence : allSentences) {
         String tei = null;
         String newFilePath = null;
         try {
-            String tmpFilePath = this.datastetConfiguration.getTmpPath();
+            String tmpFilePath = this.datastetConfiguration.getDatastetConfiguration().getTmpPath();
             newFilePath = ArticleUtilities.applyPub2TEI(file.getAbsolutePath(),
                     tmpFilePath + "/" + fileName.replace(".xml", ".tei.xml"),
-                    this.datastetConfiguration.getPub2TEIPath());
+                    this.datastetConfiguration.getDatastetConfiguration().getPub2TEIPath());
             //System.out.println(newFilePath);
 
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
@@ -2092,7 +2097,7 @@ for(String sentence : allSentences) {
             if (CollectionUtils.isEmpty(localDatasets)) {
                 continue;
             }
-            if (i >= dataseerClassificationResults.size()) {
+            if (i >= dataTypeClassificationResults.size()) {
                 break;
             }
             for (Dataset localDataset : localDatasets) {

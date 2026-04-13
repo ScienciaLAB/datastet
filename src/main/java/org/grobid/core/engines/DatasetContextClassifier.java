@@ -80,13 +80,14 @@ public class DatasetContextClassifier {
 
     @Inject
     private DatasetContextClassifier(DatastetServiceConfiguration configuration) {
-        ModelParameters parameter = configuration.getModel("context");
+        DatastetConfiguration datastetConfiguration = configuration.getDatastetConfiguration();
+        ModelParameters parameter = datastetConfiguration.getModel("context");
 
-        ModelParameters parameterUsed = configuration.getModel("context_used");
-        ModelParameters parameterCreated = configuration.getModel("context_creation");
-        ModelParameters parameterShared = configuration.getModel("context_shared");
+        ModelParameters parameterUsed = datastetConfiguration.getModel("context_used");
+        ModelParameters parameterCreated = datastetConfiguration.getModel("context_creation");
+        ModelParameters parameterShared = datastetConfiguration.getModel("context_shared");
 
-        this.useBinary = configuration.getUseBinaryContextClassifiers() == null || configuration.getUseBinaryContextClassifiers();
+        this.useBinary = datastetConfiguration.getUseBinaryContextClassifiers() == null || datastetConfiguration.getUseBinaryContextClassifiers();
 
         if (this.useBinary) {
             this.classifierBinaryUsed = new DeLFTClassifierModel("context_used", parameterUsed.delft.architecture);

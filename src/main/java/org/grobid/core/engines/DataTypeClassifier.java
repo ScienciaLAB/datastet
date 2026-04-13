@@ -8,7 +8,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.grobid.core.exceptions.GrobidException;
 import org.grobid.core.jni.DeLFTClassifierModel;
-import org.grobid.core.utilities.DatastetConfiguration;
+import org.grobid.service.configuration.DatastetConfiguration;
 import org.grobid.core.utilities.DatastetUtilities;
 import org.grobid.core.utilities.GrobidConfig.ModelParameters;
 import org.slf4j.Logger;

@@ -1,21 +1,20 @@
 package org.grobid.service.controller;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import org.glassfish.jersey.media.multipart.FormDataParam;
-import org.grobid.core.utilities.DatastetConfiguration;
+import org.grobid.service.configuration.DatastetConfiguration;
+import org.grobid.service.configuration.DatastetServiceConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.io.InputStream;
 
-import org.grobid.service.configuration.DatastetServiceConfiguration;
-
 /**
- * RESTful service for GROBID datastet extension.
+ * RESTful service for GROBID dataseer extension.
  *
  * @author Patrice
  */
@@ -26,18 +25,27 @@ public class DatastetController implements DatastetPaths {
     private static final Logger LOGGER = LoggerFactory.getLogger(DatastetController.class);
 
     private static final String TEXT = "text";
+    private static final String TEXTS = "texts";
     private static final String XML = "xml";
     private static final String TEI = "tei";
     private static final String PDF = "pdf";
     private static final String INPUT = "input";
+    private static final String JSON = "json";
     private static final String DISAMBIGUATE = "disambiguate";
     private static final String SEGMENT_SENTENCES = "segmentSentences";
 
     private DatastetConfiguration configuration;
+    private final DatastetProcessFile datastetProcessFile;
+    private final DatastetProcessString datastetProcessString;
 
     @Inject
-    public DatastetController(DatastetServiceConfiguration serviceConfiguration) {
+    public DatastetController(
+            DatastetServiceConfiguration serviceConfiguration,
+            DatastetProcessFile datastetProcessFile,
+            DatastetProcessString datastetProcessString) {
         this.configuration = serviceConfiguration.getDatastetConfiguration();
+        this.datastetProcessFile = datastetProcessFile;
+        this.datastetProcessString = datastetProcessString;
     }
 
     @GET
@@ -52,7 +60,7 @@ public class DatastetController implements DatastetPaths {
     @POST
     public Response processDatasetText_post(@FormParam(TEXT) String text) {
         LOGGER.info(text);
-        return DatastetProcessString.processDatasetSentence(text);
+        return this.datastetProcessString.processDatasetSentence(text);
     }
 
     @Path(PATH_DATASET_SENTENCE)
@@ -60,7 +68,7 @@ public class DatastetController implements DatastetPaths {
     @GET
     public Response processDatasetText_get(@QueryParam(TEXT) String text) {
         LOGGER.info(text);
-        return DatastetProcessString.processDatasetSentence(text);
+        return this.datastetProcessString.processDatasetSentence(text);
     }
 
     @Path(PATH_DATASET_PDF)
@@ -70,7 +78,7 @@ public class DatastetController implements DatastetPaths {
     public Response processDatasetPDF(@FormDataParam(INPUT) InputStream inputStream,
                                       @DefaultValue("0") @FormDataParam(DISAMBIGUATE) String disambiguate) {
         boolean disambiguateBoolean = DatastetServiceUtils.validateBooleanRawParam(disambiguate);
-        return DatastetProcessFile.processDatasetPDF(inputStream, disambiguateBoolean);
+        return this.datastetProcessFile.processDatasetPDF(inputStream, disambiguateBoolean);
     }
 
     @Path(PATH_DATASET_TEI)
@@ -84,7 +92,7 @@ public class DatastetController implements DatastetPaths {
     ) {
         boolean disambiguateBoolean = DatastetServiceUtils.validateBooleanRawParam(disambiguate);
         boolean segmentSentencesBoolean = DatastetServiceUtils.validateBooleanRawParam(segmentSentences);
-        return DatastetProcessFile.processDatasetTEI(inputStream, segmentSentencesBoolean, disambiguateBoolean);
+        return this.datastetProcessFile.processDatasetTEI(inputStream, segmentSentencesBoolean, disambiguateBoolean);
     }
 
     @Path(PATH_DATASET_JATS)
@@ -94,7 +102,7 @@ public class DatastetController implements DatastetPaths {
     public Response processJATS(@FormDataParam(INPUT) InputStream inputStream,
                                 @DefaultValue("0") @FormDataParam(DISAMBIGUATE) String disambiguate) {
         boolean disambiguateBoolean = DatastetServiceUtils.validateBooleanRawParam(disambiguate);
-        return DatastetProcessFile.processDatasetJATS(inputStream, disambiguateBoolean);
+        return this.datastetProcessFile.processDatasetJATS(inputStream, disambiguateBoolean);
     }
 
     @Path(PATH_DATATYPE_JSON)
@@ -109,5 +117,13 @@ public class DatastetController implements DatastetPaths {
     @GET
     public Response getResyncJsonDataTypes() {
         return DatastetDataTypeService.getInstance().getResyncJsonDataTypes();
+    }
+
+    public DatastetConfiguration getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(DatastetConfiguration configuration) {
+        this.configuration = configuration;
     }
 }
