@@ -11,7 +11,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.grobid.core.data.Dataset;
 import org.grobid.core.data.Dataset.DatasetType;
-import org.grobid.core.engines.DataseerClassifier;
+import org.grobid.core.engines.DataTypeClassifier;
 import org.grobid.core.engines.DatasetParser;
 import org.grobid.service.configuration.DatastetConfiguration;
 import org.slf4j.Logger;
@@ -31,16 +31,16 @@ public class DatastetProcessString {
     private static final Logger LOGGER = LoggerFactory.getLogger(DatastetProcessString.class);
 
     private final DatastetConfiguration datastetConfiguration;
-    private final DataseerClassifier dataseerClassifier;
+    private final DataTypeClassifier dataTypeClassifier;
     private final DatasetParser datasetParser;
 
     @Inject
     public DatastetProcessString(DatastetConfiguration configuration,
                                  DatasetParser datasetParser,
-                                 DataseerClassifier dataseerClassifier) {
+                                 DataTypeClassifier dataTypeClassifier) {
 
         this.datasetParser = datasetParser;
-        this.dataseerClassifier = dataseerClassifier;
+        this.dataTypeClassifier = dataTypeClassifier;
         this.datastetConfiguration = configuration;
     }
 
@@ -58,7 +58,7 @@ public class DatastetProcessString {
 
             text = text.replaceAll("\\n", " ").replaceAll("\\t", " ");
             long start = System.currentTimeMillis();
-            String retValString = this.dataseerClassifier.classify(text);
+            String retValString = this.dataTypeClassifier.classify(text);
             long end = System.currentTimeMillis();
 
             // TBD: update json with runtime and software/version 
@@ -69,7 +69,7 @@ public class DatastetProcessString {
                 response = Response.status(Response.Status.OK).entity(retValString).type(MediaType.TEXT_PLAIN).build();
             }
         } catch (NoSuchElementException nseExp) {
-            LOGGER.error("Could not get an instance of DataseerClassifier. Sending service unavailable.");
+            LOGGER.error("Could not get an instance of DataTypeClassifier. Sending service unavailable.");
             response = Response.status(Response.Status.SERVICE_UNAVAILABLE).build();
         } catch (Exception e) {
             LOGGER.error("An unexpected exception occurs. ", e);
@@ -111,7 +111,7 @@ public class DatastetProcessString {
 //                    .collect(Collectors.toList());
 
             long start = System.currentTimeMillis();
-            String retValString = this.dataseerClassifier.classify(texts);
+            String retValString = this.dataTypeClassifier.classify(texts);
             long end = System.currentTimeMillis();
 
             if (!isResultOK(retValString)) {
@@ -120,7 +120,7 @@ public class DatastetProcessString {
                 response = Response.status(Response.Status.OK).entity(retValString).type(MediaType.TEXT_PLAIN).build();
             }
         } catch (NoSuchElementException nseExp) {
-            LOGGER.error("Could not get an instance of DataseerClassifier. Sending service unavailable.");
+            LOGGER.error("Could not get an instance of DataTypeClassifier. Sending service unavailable.");
             response = Response.status(Response.Status.SERVICE_UNAVAILABLE).build();
         } catch (Exception e) {
             LOGGER.error("An unexpected exception occurs. ", e);
@@ -163,7 +163,7 @@ public class DatastetProcessString {
 
             ObjectMapper mapper = new ObjectMapper();
 
-            String classifierJson = dataseerClassifier.classify(text);
+            String classifierJson = dataTypeClassifier.classify(text);
 
             JsonNode rootNode = mapper.readTree(classifierJson);
 

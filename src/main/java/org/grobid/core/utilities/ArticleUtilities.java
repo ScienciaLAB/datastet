@@ -101,7 +101,7 @@ public class ArticleUtilities {
                 return null;
             }
 
-            File file = uploadFile(urll, this.configuration.getTmpPath(),
+            File file = uploadFile(urll, this.configuration.getDatastetConfiguration().getTmpPath(),
                     KeyGen.getKey() + ".pdf");
             return file;
         } catch (Exception e) {
@@ -182,8 +182,8 @@ public class ArticleUtilities {
     }
 
     private String getGluttonOAUrl(String doi) throws Exception {
-        String host = this.configuration.getGluttonHost();
-        String port = this.configuration.getGluttonPort();
+        String host = this.configuration.getDatastetConfiguration().getGluttonHost();
+        String port = this.configuration.getDatastetConfiguration().getGluttonPort();
         String queryUrl = "http://" + host;
         if (port != null)
             queryUrl += ":" + port;

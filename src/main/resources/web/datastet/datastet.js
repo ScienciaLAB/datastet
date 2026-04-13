@@ -40,17 +40,11 @@ var grobid = (function ($) {
         $('#gbdForm').attr('action', baseUrl);
     }
 
-    function setBaseUrl2(ext) {
-        var baseUrl = defineBaseURL(ext);
-        $('#gbdForm2').attr('action', baseUrl);
-    }
-
     $(document).ready(function () {
 
         $("#subTitle").html("About");
         $("#divAbout").show();
         $("#divRestI").hide();
-        $("#divRestII").hide();
         $("#divDoc").hide();
 
         createInputTextArea();
@@ -61,24 +55,14 @@ var grobid = (function ($) {
             return true;
         });
 
-        $("#selectedService2").val('processDataseerSentence');
-        $('#selectedService2').change(function () {
-            processChange2();
-            return true;
-        });
-
         $('#submitRequest').bind('click', submitQuery);
-        $('#submitRequest2').bind('click', submitQuery2);
 
         setBaseUrl('annotateDatasetSentence');
-        setBaseUrl2('annotateDataseerSentence');
         setExamples('1');
-        setExamples('2');
 
         $("#about").click(function () {
             $("#about").attr('class', 'section-active');
             $("#rest").attr('class', 'section-not-active');
-            $("#rest2").attr('class', 'section-not-active');
             $("#doc").attr('class', 'section-not-active');
             $("#demo").attr('class', 'section-not-active');
 
@@ -87,42 +71,20 @@ var grobid = (function ($) {
 
             $("#divAbout").show();
             $("#divRestI").hide();
-            $("#divRestII").hide();
             $("#divDoc").hide();
             $("#divDemo").hide();
             return false;
         });
         $("#rest").click(function () {
             $("#rest").attr('class', 'section-active');
-            $("#rest2").attr('class', 'section-not-active');
             $("#doc").attr('class', 'section-not-active');
             $("#about").attr('class', 'section-not-active');
             $("#demo").attr('class', 'section-not-active');
 
             $("#subTitle").hide();
-            //$("#subTitle").show();
             processChange();
 
             $("#divRestI").show();
-            $("#divRestII").hide();
-            $("#divAbout").hide();
-            $("#divDoc").hide();
-            $("#divDemo").hide();
-            return false;
-        });
-        $("#rest2").click(function () {
-            $("#rest").attr('class', 'section-not-active');
-            $("#rest2").attr('class', 'section-active');
-            $("#doc").attr('class', 'section-not-active');
-            $("#about").attr('class', 'section-not-active');
-            $("#demo").attr('class', 'section-not-active');
-
-            $("#subTitle2").hide();
-            //$("#subTitle").show();
-            processChange2();
-
-            $("#divRestI").hide();
-            $("#divRestII").show();
             $("#divAbout").hide();
             $("#divDoc").hide();
             $("#divDemo").hide();
@@ -131,7 +93,6 @@ var grobid = (function ($) {
         $("#doc").click(function () {
             $("#doc").attr('class', 'section-active');
             $("#rest").attr('class', 'section-not-active');
-            $("#rest2").attr('class', 'section-not-active');
             $("#about").attr('class', 'section-not-active');
             $("#demo").attr('class', 'section-not-active');
 
@@ -141,7 +102,6 @@ var grobid = (function ($) {
             $("#divDoc").show();
             $("#divAbout").hide();
             $("#divRestI").hide();
-            $("#divRestII").hide();
             $("#divDemo").hide();
             return false;
         });
@@ -153,19 +113,8 @@ var grobid = (function ($) {
         return true;
     }
 
-    function ShowRequest2(formData, jqForm, options) {
-        var queryString = $.param(formData);
-        $('#infoResult2').html('<font color="red">Requesting server...</font>');
-        return true;
-    }
-
     function AjaxError(jqXHR, textStatus, errorThrown) {
         $('#infoResult').html("<font color='red'>Error encountered while requesting the server.<br/>" + jqXHR.responseText + "</font>");
-        entities = null;
-    }
-
-    function AjaxError2(jqXHR, textStatus, errorThrown) {
-        $('#infoResult2').html("<font color='red'>Error encountered while requesting the server.<br/>" + jqXHR.responseText + "</font>");
         entities = null;
     }
 
@@ -234,9 +183,8 @@ var grobid = (function ($) {
             var formData = new FormData(form);
             var xhr = new XMLHttpRequest();
             var url = $('#gbdForm').attr('action');
-            xhr.responseType = 'json'; 
+            xhr.responseType = 'json';
             xhr.open('POST', url, true);
-            //ShowRequest2();
 
             var nbPages = -1;
 
@@ -376,51 +324,6 @@ var grobid = (function ($) {
         }
     }
 
-    function submitQuery2() {
-        $('#infoResult2').html('<font color="grey">Requesting server...</font>');
-        $('#requestResult2').html('');
-
-        // re-init the entity map
-        entityMap = new Object();
-        conceptMap = new Object();
-
-        var selected = $('#selectedService2 option:selected').attr('value');
-        var urlLocal = $('#gbdForm2').attr('action');
-        if (selected == 'processDataseerSentence') {
-            {
-                $.ajax({
-                    type: 'GET',
-                    url: urlLocal,
-                    data: {text: $('#inputTextArea2').val()},
-                    success: SubmitSuccesful2,
-                    error: AjaxError,
-                    contentType: false
-                    //dataType: "text"
-                });
-            }
-        }
-        else if (selected == 'processDataseerTEI' || selected == 'processDataseerJATS' || selected == 'processDataseerPDF') {
-            var form = document.getElementById('gbdForm2');
-            var formData = new FormData(form);
-            var xhr = new XMLHttpRequest();
-            var url = urlLocal
-            xhr.responseType = 'xml'; 
-            xhr.open('POST', url, true);
-
-            xhr.onreadystatechange = function (e) {
-                if (xhr.readyState == 4 && xhr.status == 200) {
-                    var response = e.target.response;
-                    //console.log(response);
-                    SubmitSuccesful2(response, xhr.status);
-                } else if (xhr.status != 200) {
-                    AjaxError("Response " + xhr.status + ": ");
-                }
-            };
-            xhr.send(formData);
-        }
-        
-    }
-
     function SubmitSuccesful(responseText, statusText) {
         var selected = $('#selectedService option:selected').attr('value');
 
@@ -435,55 +338,6 @@ var grobid = (function ($) {
         } else if (selected == 'processDatasetJATS') {
             SubmitSuccesfulXML(responseText, statusText);
         } 
-    }
-
-    function SubmitSuccesful2(responseText, statusText) {
-        var selected = $('#selectedService2 option:selected').attr('value');
-
-        if (selected == 'processDataseerSentence') {
-            SubmitSuccesfulText2(responseText, statusText);
-        } else if (selected == 'processDataseerPDF') {
-            SubmitSuccesfulXML(responseText, statusText);
-        } else if (selected == 'processDataseerTEI') {
-            SubmitSuccesfulXML(responseText, statusText);
-        } else if (selected == 'processDataseerJATS') {
-            SubmitSuccesfulXML(responseText, statusText);
-        } 
-    }
-
-    function SubmitSuccesfulText2(responseText, statusText) {
-        responseJson = responseText;
-        if ((responseJson == null) || (responseJson.length == 0)) {
-            $('#infoResult2')
-                .html("<font color='red'>Error encountered while receiving the server's answer: response is empty.</font>");
-            return;
-        } else {
-            $('#infoResult2').html('');
-        }
-
-        responseJson = jQuery.parseJSON(responseJson);
-
-        var display = '<div class=\"note-tabs\"> \
-            <ul id=\"resultTab\" class=\"nav nav-tabs\"> \
-                <li class="active"><a href=\"#navbar-fixed-json\" data-toggle=\"tab\">Response</a></li> \
-            </ul> \
-            <div class="tab-content"> \
-            <div class="tab-pane active" id="navbar-fixed-annotation">\n';
-
-        display += '<div class="tab-pane " id="navbar-fixed-json">\n';
-        display += "<pre class='prettyprint' id='jsonCode'>";
-        display += "<pre class='prettyprint lang-json' id='xmlCode'>";
-        var testStr = vkbeautify.json(responseText);
-
-        display += htmll(testStr);
-
-        display += "</pre>";
-        display += '</div></div></div>';
-
-        $('#requestResult2').html(display);
-        window.prettyPrint && prettyPrint();
-
-        $('#requestResult2').show();
     }
 
     function SubmitSuccesfulText(responseText, statusText) {
@@ -670,11 +524,11 @@ var grobid = (function ($) {
     function SubmitSuccesfulXML(responseText, statusText) {
         responseXML = responseText;
         if ((responseXML == null) || (responseXML.length == 0)) {
-            $('#infoResult2')
+            $('#infoResult')
                 .html("<font color='red'>Error encountered while receiving the server's answer: response is empty.</font>");
             return;
         } else {
-            $('#infoResult2').html('');
+            $('#infoResult').html('');
         }
 
         var display = '<div class=\"note-tabs\"> \
@@ -684,7 +538,6 @@ var grobid = (function ($) {
             <div class="tab-content"> \
             <div class="tab-pane active" id="navbar-fixed-annotation">\n';
 
-        
         display += '<div class="tab-pane " id="navbar-fixed-xml">\n';
         display += "<pre class='prettyprint' id='xmlCode'>";
         display += "<pre class='prettyprint lang-xml' id='xmlCode'>";
@@ -695,10 +548,10 @@ var grobid = (function ($) {
         display += "</pre>";
         display += '</div></div></div>';
 
-        $('#requestResult2').html(display);
+        $('#requestResult').html(display);
         window.prettyPrint && prettyPrint();
 
-        $('#requestResult2').show();
+        $('#requestResult').show();
     }
 
     function submitSuccesfulJSON(responseText, statusText) {
@@ -1506,24 +1359,6 @@ var grobid = (function ($) {
         }
     };
 
-    function processChange2() {
-        var selected = $('#selectedService2 option:selected').attr('value');
-
-        if (selected == 'processDataseerSentence') {
-            createInputTextArea2();
-            setBaseUrl2('processDataseerSentence');
-        } else if (selected == 'processDataseerPDF') {
-            createInputFile2(selected);
-            setBaseUrl2('processDataseerPDF');
-        } else if (selected == 'processDataseerTEI') {
-            createInputFile2(selected);
-            setBaseUrl2('processDataseerTEI');
-        } else if (selected == 'processDataseerJATS') {
-            createInputFile2(selected);
-            setBaseUrl2('processDataseerJATS');
-        }
-    };
-
     const wikimediaURL_prefix = 'https://';
     const wikimediaURL_suffix = '.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&pithumbsize=200&pageids=';
 
@@ -1868,22 +1703,9 @@ var grobid = (function ($) {
         $('#gbdForm').attr('method', 'post');
     }
 
-    function createInputFile2() {
-        $('#textInputDiv2').hide();
-        $('#fileInputDiv2').show();
-
-        $('#gbdForm2').attr('enctype', 'multipart/form-data');
-        $('#gbdForm2').attr('method', 'post');
-    }
-
     function createInputTextArea() {
         $('#fileInputDiv').hide();
         $('#textInputDiv').show();
-    }
-
-    function createInputTextArea2() {
-        $('#fileInputDiv2').hide();
-        $('#textInputDiv2').show();
     }
 
     function parse(xmlStr) {

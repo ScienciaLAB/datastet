@@ -55,48 +55,6 @@ public class DatastetController implements DatastetPaths {
         return DatastetRestProcessGeneric.isAlive();
     }
 
-    @Path(PATH_DATASEER_SENTENCE)
-    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @POST
-    public Response processText_post(@FormParam(TEXT) String text) {
-        LOGGER.info(text);
-        return this.datastetProcessString.processDataseerSentence(text);
-    }
-
-    @Path(PATH_OLD_DATASEER_SENTENCE)
-    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @POST
-    public Response processTextOld_post(@FormParam(TEXT) String text) {
-        LOGGER.info(text);
-        return this.datastetProcessString.processDataseerSentence(text);
-    }
-
-    @Path(PATH_DATASEER_SENTENCE)
-    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @GET
-    public Response processText_get(@QueryParam(TEXT) String text) {
-        LOGGER.info(text);
-        return this.datastetProcessString.processDataseerSentence(text);
-    }
-
-    @Path(PATH_DATASEER_SENTENCES)
-    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @POST
-    public Response processTexts_post(@FormDataParam(TEXTS) String texts) {
-        LOGGER.info("Received multiple sentences as JSON list");
-        return this.datastetProcessString.processDataseerSentences(texts);
-    }
-
-    @Path(PATH_OLD_DATASEER_SENTENCES)
-    @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @POST
-    public Response processTextsOld_post(@FormDataParam(TEXTS) String texts) {
-        LOGGER.info("Received multiple sentences as JSON list");
-        return this.datastetProcessString.processDataseerSentences(texts);
-    }
-
     @Path(PATH_DATASET_SENTENCE)
     @Produces(MediaType.APPLICATION_JSON + ";charset=utf-8")
     @POST
@@ -111,14 +69,6 @@ public class DatastetController implements DatastetPaths {
     public Response processDatasetText_get(@QueryParam(TEXT) String text) {
         LOGGER.info(text);
         return this.datastetProcessString.processDatasetSentence(text);
-    }
-
-    @Path(PATH_DATASEER_PDF)
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Produces(MediaType.APPLICATION_XML)
-    @POST
-    public Response processPDF(@FormDataParam(INPUT) InputStream inputStream) {
-        return this.datastetProcessFile.processPDF(inputStream);
     }
 
     @Path(PATH_DATASET_PDF)
@@ -153,25 +103,6 @@ public class DatastetController implements DatastetPaths {
                                 @DefaultValue("0") @FormDataParam(DISAMBIGUATE) String disambiguate) {
         boolean disambiguateBoolean = DatastetServiceUtils.validateBooleanRawParam(disambiguate);
         return this.datastetProcessFile.processDatasetJATS(inputStream, disambiguateBoolean);
-    }
-
-    @Path(PATH_DATASEER_TEI)
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Produces(MediaType.APPLICATION_XML)
-    @POST
-    public Response processTEI(
-            @FormDataParam(INPUT) InputStream inputStream,
-            @FormDataParam("segmentSentences") String segmentSentences) {
-        boolean segmentSentencesBoolean = DatastetServiceUtils.validateBooleanRawParam(segmentSentences);
-        return this.datastetProcessFile.processTEI(inputStream, segmentSentencesBoolean);
-    }
-
-    @Path(PATH_DATASEER_JATS)
-    @Consumes(MediaType.MULTIPART_FORM_DATA)
-    @Produces(MediaType.APPLICATION_XML)
-    @POST
-    public Response processJATS(@FormDataParam(INPUT) InputStream inputStream) {
-        return this.datastetProcessFile.processJATS(inputStream);
     }
 
     @Path(PATH_DATATYPE_JSON)

@@ -11,7 +11,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.grobid.core.data.BibDataSet;
 import org.grobid.core.data.Dataset;
 import org.grobid.core.document.Document;
-import org.grobid.core.engines.DataseerClassifier;
+import org.grobid.core.engines.DataTypeClassifier;
 import org.grobid.core.engines.DatasetParser;
 import org.grobid.core.layout.Page;
 import org.grobid.core.utilities.ArticleUtilities;
@@ -41,147 +41,20 @@ public class DatastetProcessFile {
     private static final Logger LOGGER = LoggerFactory.getLogger(DatastetProcessFile.class);
 
     private final DatastetConfiguration datastetConfiguration;
-    private final DataseerClassifier dataseerClassifier;
+    private final DataTypeClassifier dataTypeClassifier;
     private final DatasetParser datasetParser;
 
     @Inject
     public DatastetProcessFile(DatastetConfiguration configuration,
                                DatasetParser datasetParser,
-                               DataseerClassifier dataseerClassifier) {
+                               DataTypeClassifier dataTypeClassifier) {
 
         this.datasetParser = datasetParser;
-        this.dataseerClassifier = dataseerClassifier;
+        this.dataTypeClassifier = dataTypeClassifier;
         this.datastetConfiguration = configuration;
     }
 
     /**
-     * Uploads a TEI document, identify dataset introductory section, segment and classify sentences.
-     *
-     * @param inputStream the data of origin TEI document
-     * @return a response object which contains an enriched TEI representation of the document
-     */
-    public Response processTEI(final InputStream inputStream, boolean segmentSentences) {
-        LOGGER.debug(methodLogIn());
-        String retVal = null;
-        Response response = null;
-        File originFile = null;
-        try {
-            originFile = ArticleUtilities.writeInputFile(inputStream, ".tei.xml");
-            if (originFile == null) {
-                LOGGER.error("The input file cannot be written.");
-                throw new DatastetServiceException(
-                        "The input file cannot be written. ", Response.Status.INTERNAL_SERVER_ERROR);
-            }
-
-            // starts conversion process
-            retVal = this.dataseerClassifier.processTEI(originFile.getAbsolutePath(), segmentSentences, false);
-
-            if (!isResultOK(retVal)) {
-                response = Response.status(Response.Status.NO_CONTENT).build();
-            } else {
-                response = Response.status(Response.Status.OK)
-                        .entity(retVal)
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML + "; charset=UTF-8")
-                        .header("Access-Control-Allow-Origin", "*")
-                        .header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT")
-                        .build();
-            }
-        } catch (Exception exp) {
-            LOGGER.error("An unexpected exception occurs. ", exp);
-            response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(exp.getMessage()).build();
-        } finally {
-            if (originFile != null)
-                IOUtilities.removeTempFile(originFile);
-        }
-
-        LOGGER.debug(methodLogOut());
-        return response;
-    }
-
-    /**
-     * Uploads a JATS document, identify dataset introductory section, segment and classify sentences.
-     *
-     * @param inputStream the data of origin JATS document
-     * @return a response object which contains an enriched TEI representation of the document
-     */
-    public Response processJATS(final InputStream inputStream) {
-        LOGGER.debug(methodLogIn());
-        String retVal = null;
-        Response response = null;
-        File originFile = null;
-        try {
-            originFile = ArticleUtilities.writeInputFile(inputStream, ".xml");
-            if (originFile == null) {
-                LOGGER.error("The input file cannot be written.");
-                throw new DatastetServiceException(
-                        "The input file cannot be written. ", Response.Status.INTERNAL_SERVER_ERROR);
-            }
-
-            // starts conversion process
-            retVal = dataseerClassifier.processJATS(originFile.getAbsolutePath());
-
-            if (!isResultOK(retVal)) {
-                response = Response.status(Response.Status.NO_CONTENT).build();
-            } else {
-                response = Response.status(Response.Status.OK)
-                        .entity(retVal)
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML + "; charset=UTF-8")
-                        .header("Access-Control-Allow-Origin", "*")
-                        .header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT")
-                        .build();
-            }
-        } catch (Exception exp) {
-            LOGGER.error("An unexpected exception occurs. ", exp);
-            response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(exp.getMessage()).build();
-        } finally {
-            if (originFile != null)
-                IOUtilities.removeTempFile(originFile);
-        }
-
-        LOGGER.debug(methodLogOut());
-        return response;
-    }
-
-    /**
-     * Uploads a PDF document, extract and structured content with GROBID, convert it into TEI,
-     * identify dataset introductory section, segment and classify sentences.
-     *
-     * @param inputStream the data of origin PDF document
-     * @return a response object which contains an enriched TEI representation of the document
-     */
-    public Response processPDF(final InputStream inputStream) {
-        LOGGER.debug(methodLogIn());
-        String retVal = null;
-        Response response = null;
-        File originFile = null;
-        try {
-            originFile = IOUtilities.writeInputFile(inputStream);
-            if (originFile == null) {
-                LOGGER.error("The input file cannot be written.");
-                throw new DatastetServiceException(
-                        "The input file cannot be written. ", Response.Status.INTERNAL_SERVER_ERROR);
-            }
-
-            // starts conversion process
-            retVal = dataseerClassifier.processPDF(originFile.getAbsolutePath());
-
-            if (!isResultOK(retVal)) {
-                response = Response.status(Response.Status.NO_CONTENT).build();
-            } else {
-                response = Response.status(Response.Status.OK)
-                        .entity(retVal)
-                        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_XML + "; charset=UTF-8")
-                        .header("Access-Control-Allow-Origin", "*")
-                        .header("Access-Control-Allow-Methods", "GET, POST, DELETE, PUT")
-                        .build();
-            }
-        } catch (Exception exp) {
-            LOGGER.error("An unexpected exception occurs. ", exp);
-            response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(exp.getMessage()).build();
-        } finally {
-            if (originFile != null)
-                IOUtilities.removeTempFile(originFile);
-        }
 
         LOGGER.debug(methodLogOut());
         return response;

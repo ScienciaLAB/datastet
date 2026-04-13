@@ -26,16 +26,6 @@ useBinaryContextClassifiers: false
 # sequence labeling model (identify data-related sections)
 models:
 
-  # model for zones
-  - name: "dataseer"
-    engine: "wapiti"
-    #engine: "delft"
-    wapiti:
-      # wapiti training parameters, they will be used at training time only
-      epsilon: 0.00001
-      window: 20
-      nbMaxIterations: 2000
-
   # classifier model, dataset binary (dataset or not dataset in the current sentence)
   - name: "dataseer-binary"
     engine: "delft"

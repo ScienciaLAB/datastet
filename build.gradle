@@ -2,34 +2,28 @@ buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url = "https://plugins.gradle.org/m2/" }
         flatDir {
             dirs 'localLibs'
         }
-        maven {
-            name = 'ajoberstar-backup'
-            url = 'https://ajoberstar.org/bintray-backup/'
-        }
     }
     dependencies {
-        classpath 'gradle.plugin.org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.12.0'
-        classpath 'com.adarshr:gradle-test-logger-plugin:2.0.0'
-        classpath group: 'org.yaml', name: 'snakeyaml', version: '1.19'
+        classpath 'gradle.plugin.org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.12.2'
+        classpath 'com.adarshr:gradle-test-logger-plugin:4.0.0'
+        classpath group: 'org.yaml', name: 'snakeyaml', version: '2.2'
     }
 }
 
 plugins {
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
-    id 'org.ajoberstar.grgit' version '5.3.0' apply false
+    id 'com.gradleup.shadow' version '8.3.10'
     id 'distribution'
     id 'application'
-    id "org.jetbrains.kotlin.jvm" version "1.8.21"
 }
 
 apply plugin: 'jacoco'
 
 jacoco {
-    toolVersion = '0.8.11'
+    toolVersion = '0.8.14'
 }
 
 apply plugin: 'java-library'
@@ -37,16 +31,21 @@ apply plugin: 'base'
 apply plugin: 'com.github.kt3k.coveralls'
 
 group = "org.grobid.datastet"
-version = '0.8.3-SNAPSHOT'
+version = '0.8.2-SNAPSHOT'
 
 description = """datastet"""
 
+import javax.inject.Inject
 import org.apache.tools.ant.taskdefs.condition.Os
+import org.gradle.process.ExecOperations
 
-sourceCompatibility = 1.17
-targetCompatibility = 1.17
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
@@ -60,15 +59,8 @@ repositories {
     mavenLocal()
     mavenCentral()
     maven {
-        url new File(rootProject.rootDir, "localLibs")
+        url = new File(rootProject.rootDir, "localLibs").toURI()
     }
-    maven {
-        name = 'ajoberstar-backup'
-        url = 'https://ajoberstar.org/bintray-backup/'
-    }
-//    flatDir {
-//        dirs 'localLibs'
-//    }
 }
 
 ext {
@@ -79,43 +71,40 @@ ext {
 
 dependencies {
 
-    // packaging local libs inside output jar
-    //implementation fileTree(dir: new File(rootProject.rootDir, 'lib'), include: localLibs)
-
     implementation group: 'net.arnx', name: 'jsonic', version: '1.3.10'
 
     //Logging
-    implementation 'org.slf4j:slf4j-api:1.7.30'
+    implementation 'org.slf4j:slf4j-api:1.7.36'
 
     //Apache commons
     implementation group: 'commons-pool', name: 'commons-pool', version: '1.6'
-    implementation group: 'commons-io', name: 'commons-io', version: '2.14.0'
+    implementation group: 'commons-io', name: 'commons-io', version: '2.21.0'
     implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.14'
-    implementation group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.5.3'
-    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.6'
-    implementation group: 'org.apache.commons', name: 'commons-collections4', version: '4.4'
-    implementation group: 'org.apache.commons', name: 'commons-csv', version: '1.5'
+    implementation group: 'org.apache.httpcomponents', name: 'httpmime', version: '4.5.14'
+    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.20.0'
+    implementation group: 'org.apache.commons', name: 'commons-collections4', version: '4.5.0'
+    implementation group: 'org.apache.commons', name: 'commons-csv', version: '1.14.1'
 
     //Dropwizard
-    implementation 'ru.vyarus:dropwizard-guicey:7.0.0'
+    implementation 'ru.vyarus:dropwizard-guicey:7.3.1'
 
-    implementation 'io.dropwizard:dropwizard-bom:4.0.2'
-    implementation 'io.dropwizard:dropwizard-core:4.0.2'
-    implementation 'io.dropwizard:dropwizard-assets:4.0.2'
-    implementation 'io.dropwizard:dropwizard-testing:4.0.2'
-    implementation 'io.dropwizard:dropwizard-forms:4.0.2'
-    implementation 'io.dropwizard:dropwizard-client:4.0.2'
-    implementation 'io.dropwizard:dropwizard-auth:4.0.2'
-    implementation 'io.dropwizard.metrics:metrics-core:4.2.22'
-    implementation 'io.dropwizard.metrics:metrics-servlets:4.2.22'
+    implementation 'io.dropwizard:dropwizard-bom:4.0.17'
+    implementation 'io.dropwizard:dropwizard-core:4.0.17'
+    implementation 'io.dropwizard:dropwizard-assets:4.0.17'
+    implementation 'io.dropwizard:dropwizard-testing:4.0.17'
+    implementation 'io.dropwizard:dropwizard-forms:4.0.17'
+    implementation 'io.dropwizard:dropwizard-client:4.0.17'
+    implementation 'io.dropwizard:dropwizard-auth:4.0.17'
+    implementation 'io.dropwizard.metrics:metrics-core:4.2.38'
+    implementation 'io.dropwizard.metrics:metrics-servlets:4.2.38'
 
-    implementation group: 'com.google.guava', name: 'guava', version: '32.0.1-jre'
+    implementation group: 'com.google.guava', name: 'guava', version: '33.5.0-jre'
 
     //Parsing xml/json
-    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.13.1'
-    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.4.2'
-    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.10.1'
-    implementation group: 'xom', name: 'xom', version: '1.3.2'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.21.1'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.21.1'
+    // jackson-annotations is pulled in transitively by jackson-databind
+    implementation group: 'xom', name: 'xom', version: '1.3.9'
     implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.0'
     implementation group: 'com.sun.xml.bind', name: 'jaxb-core', version: '2.3.0'
     implementation group: 'com.sun.xml.bind', name: 'jaxb-impl', version: '2.3.0'
@@ -123,22 +112,24 @@ dependencies {
     implementation group: 'javax.activation', name: 'activation', version: '1.1.1'
     implementation group: 'asm', name: 'asm', version: '3.3.1'
 
-    implementation 'black.ninia:jep:4.0.2'
+    implementation 'black.ninia:jep:4.3.1'
     // for sentence segmentation only
-    implementation 'org.apache.opennlp:opennlp-tools:1.9.1'
-    implementation "joda-time:joda-time:2.9.9"
+    implementation 'org.apache.opennlp:opennlp-tools:1.9.4'
+    implementation "joda-time:joda-time:2.14.0"
     implementation "org.apache.lucene:lucene-analyzers-common:4.5.1"
-    implementation group: 'org.jruby', name: 'jruby-complete', version: '9.2.13.0'
-    implementation "org.apache.pdfbox:pdfbox:2.0.18"
+    implementation group: 'org.jruby', name: 'jruby-complete', version: '9.4.12.1'
+    implementation "org.apache.pdfbox:pdfbox:2.0.35"
 
     implementation group: 'org.semanticweb.yars', name: 'nxparser-parsers', version: '2.3.3'
-    implementation group: 'org.jvnet', name: 'mimepull', version: '1.6'
 
     //Grobid
-    implementation(group: 'org.grobid', name: 'grobid-core', version: '0.8.2') {
+    implementation(group: 'org.grobid', name: 'grobid-core', version: '0.9.0') {
         exclude group: 'org.slf4j', module: "slf4j-log4j12"
     }
-    implementation(group: 'org.grobid', name: 'grobid-trainer', version: '0.8.2') {
+    api(group: 'org.grobid', name: 'grobid-service', version: '0.9.0') {
+        exclude group: 'org.slf4j', module: "slf4j-log4j12"
+    }
+    implementation(group: 'org.grobid', name: 'grobid-trainer', version: '0.9.0') {
         exclude group: 'org.slf4j', module: "slf4j-log4j12"
     }
 
@@ -152,7 +143,6 @@ dependencies {
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine") {
         because 'allows JUnit 3 and JUnit 4 tests to run'
     }
-
     testRuntimeOnly("org.junit.platform:junit-platform-launcher") {
         because 'allows tests to run from IDEs that bundle older version of launcher'
     }
@@ -161,9 +151,6 @@ dependencies {
     testImplementation 'org.hamcrest:hamcrest-library:2.2'
     testImplementation 'org.powermock:powermock-module-junit4:2.0.9'
     testImplementation 'org.powermock:powermock-api-easymock:2.0.9'
-    testImplementation 'org.jetbrains.kotlin:kotlin-test'
-    testImplementation "io.mockk:mockk:1.13.9"
-
 }
 
 configurations.all {
@@ -173,7 +160,6 @@ configurations.all {
 
     exclude group: 'org.slf4j', module: "slf4j-log4j12"
 }
-
 
 def getJavaLibraryPath = {
     def jepLocalLibraries = ""
@@ -214,7 +200,10 @@ test {
 
     if (JavaVersion.current().compareTo(JavaVersion.VERSION_1_8) > 0) {
         jvmArgs "--add-opens", "java.base/java.util.stream=ALL-UNNAMED",
-            "--add-opens", "java.base/java.io=ALL-UNNAMED"
+            "--add-opens", "java.base/java.io=ALL-UNNAMED",
+            "--add-opens", "java.xml/jdk.xml.internal=ALL-UNNAMED",
+            "--add-opens", "java.base/java.lang=ALL-UNNAMED",
+            "--add-opens", "java.base/java.util=ALL-UNNAMED"
     }
     systemProperty "java.library.path", "${System.getProperty('java.library.path')}:" + getJavaLibraryPath()
 }
@@ -222,17 +211,6 @@ test {
 // return the default value if the property has not been specified in command line
 ext.getArg = { propName, defaultVal ->
     return project.hasProperty(propName) ? project.getProperty(propName) : defaultVal;
-}
-
-task integration(type: Test) {
-    include '**'
-    maxHeapSize = "1024m"
-
-    if (JavaVersion.current().compareTo(JavaVersion.VERSION_1_8) > 0) {
-        jvmArgs "--add-opens", "java.base/java.util.stream=ALL-UNNAMED",
-                "--add-opens", "java.base/java.io=ALL-UNNAMED"
-    }
-    systemProperty "java.library.path", "${System.getProperty('java.library.path')}:" + getJavaLibraryPath()
 }
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
@@ -254,7 +232,7 @@ publishing {
 task install(dependsOn: publishToMavenLocal)
 
 task mainJar(type: ShadowJar) {
-    zip64 true
+    zip64 = true
     from sourceSets.main.output
 
     from {
@@ -271,11 +249,10 @@ task mainJar(type: ShadowJar) {
 shadowJar {
     archiveClassifier = 'onejar'
     mergeServiceFiles()
-    zip64 true
+    zip64 = true
     manifest {
         attributes 'Main-Class': 'org.grobid.core.main.batch.DatastetMain'
     }
-    //from sourceSets.main.output
 
     from {
         project.configurations.runtimeClasspath.collect {
@@ -292,11 +269,7 @@ shadowJar {
 
 jar {
     dependsOn mainJar
-    enabled true
-}
-
-artifacts {
-    archives shadowJar
+    enabled = true
 }
 
 distZip.enabled = true
@@ -309,27 +282,50 @@ artifacts {
     archives shadowJar
 }
 
-import org.ajoberstar.grgit.Grgit
+task copyModels(type: Copy) {
+    from "${rootDir}/resources/models"
+    include "**/*.wapiti"
+    include "**/config.json"
+    include "**/transformer-config.json"
+    include "**/transformer-tokenizer/**"
+    include "**/model_weights.hdf5"
+    include "**/preprocessor.json"
+    exclude "**/features-engineering/**"
+    exclude "**/result-logs/**"
+    into "${grobidHome}/models/"
 
-task downloadModelsGit {
     doLast {
-        if (new File("${grobidHome}/models/datastet").exists()) {
-            def grgit = Grgit.open(
-                dir: "${grobidHome}/models/datastet",
-            )
-            grgit.pull()
-        } else {
-            def grgit = Grgit.clone(
-                dir: "${grobidHome}/models/datastet",
-                uri: "https://huggingface.co/sciencialab/datastet-models",
-                depth: 1
-            )
-        }
-
+        print "Copy models under grobid-home: ${grobidHome}"
     }
 }
 
-task installModels(dependsOn: [downloadModelsGit]){
+// Gradle 8+ removed the dynamic `exec{}` shortcut inside task actions, so we
+// inject ExecOperations via a helper interface and call it from doLast.
+interface InjectedExecOps {
+    @Inject ExecOperations getExecOps()
+}
+
+task downloadModelsGit(dependsOn: copyModels) {
+    def targetDir = file("${grobidHome}/models/datastet")
+    def injected = objects.newInstance(InjectedExecOps)
+    doLast {
+        targetDir.parentFile.mkdirs()
+        if (targetDir.exists()) {
+            injected.execOps.exec {
+                workingDir = targetDir
+                commandLine 'git', 'pull'
+            }
+        } else {
+            injected.execOps.exec {
+                commandLine 'git', 'clone',
+                    'https://huggingface.co/sciencialab/datastet-models',
+                    targetDir.absolutePath
+            }
+        }
+    }
+}
+
+task installModels(dependsOn: [copyModels, downloadModelsGit]){
     doLast {
         def sourceDir = file("${grobidHome}/models/datastet")
         def destDir = file("${grobidHome}/models/")
@@ -340,7 +336,6 @@ task installModels(dependsOn: [downloadModelsGit]){
             "context_shared_bert",
             "context_used_bert",
             "datasets-BERT_CRF",
-            "dataseer",
             "dataseer-binary_bert",
             "dataseer-first_bert",
             "dataseer-reuse_bert"
@@ -359,94 +354,14 @@ task installModels(dependsOn: [downloadModelsGit]){
 }
 
 wrapper {
-    gradleVersion "7.2"
-}
-
-// Custom Tasks
-
-///////////////////////////
-// train and eval ML models
-
-// Run like this: ./gradlew train_dataseer -PgH=/path/grobid/home
-task(train_dataseer, dependsOn: 'classes', type: JavaExec, group: 'training') {
-    mainClass = 'org.grobid.trainer.DataseerTrainerRunner'
-    classpath = sourceSets.main.runtimeClasspath
-    args '0', 'dataseer', getArg('gH', '../grobid-home'), getArg('t', '0')
-    if (JavaVersion.current().compareTo(JavaVersion.VERSION_1_8) > 0) {
-        jvmArgs '-Xmx3072m', "--add-opens", "java.base/java.lang=ALL-UNNAMED"
-    } else {
-        jvmArgs '-Xmx3072m'
-    }
-    systemProperty "java.library.path", "${System.getProperty('java.library.path')}:" + getJavaLibraryPath()
-}
-
-// Run like this: ./gradlew train_dataseer -PgH=/path/grobid/home
-//task(train_dataseer, dependsOn: 'classes', type: JavaExec, group: 'training') {
-//    mainClass = 'org.grobid.trainer.DataseerTrainer'
-//    classpath = sourceSets.main.runtimeClasspath
-//    args '0', 'dataseer', getArg('gH', '../grobid-home'), getArg('b', ''),
-//    jvmArgs '-Xms2g', '-Xmx8g'
-//}
-
-// Run like this: ./gradlew eval_dataseer -PgH=/path/grobid/home
-task(eval_dataseer, dependsOn: 'classes', type: JavaExec, group: 'evaluation') {
-    mainClass = 'org.grobid.trainer.DataseerTrainerRunner'
-    classpath = sourceSets.main.runtimeClasspath
-    args '1', 'dataseer', getArg('gH', '../grobid-home')
-    if (JavaVersion.current().compareTo(JavaVersion.VERSION_1_8) > 0) {
-        jvmArgs '-Xmx3072m', "--add-opens", "java.base/java.lang=ALL-UNNAMED"
-    } else {
-        jvmArgs '-Xmx3072m'
-    }
-    systemProperty "java.library.path", "${System.getProperty('java.library.path')}:" + getJavaLibraryPath()
-//    jvmArgs '-Xms2g', '-Xmx8g'
-}
-
-// Run like this: ./gradlew eval_dataseer_split -PgH=/path/grobid/home -Ps=0.8 -Pt=10
-task(eval_dataseer_split, dependsOn: 'classes', type: JavaExec, group: 'evaluation') {
-    mainClass = 'org.grobid.trainer.DataseerTrainerRunner'
-    classpath = sourceSets.main.runtimeClasspath
-    args '2', 'dataseer', getArg('gH', '../grobid-home'), getArg('s', 0.9), getArg('t', '0')
-    //jvmArgs '-Xms2g', '-Xmx8g'
-    if (JavaVersion.current().compareTo(JavaVersion.VERSION_1_8) > 0) {
-        jvmArgs '-Xms2g', '-Xmx8g', "--add-opens", "java.base/java.lang=ALL-UNNAMED"
-    } else {
-        jvmArgs '-Xms2g', '-Xmx8g'
-    }
-    systemProperty "java.library.path", "${System.getProperty('java.library.path')}:" + getJavaLibraryPath()
-}
-
-// Run like this: ./gradlew eval_dataseer_nfold -PgH=/path/grobid/home -Pt=10
-task(eval_dataseer_nfold, dependsOn: 'classes', type: JavaExec, group: 'evaluation') {
-    mainClass = 'org.grobid.trainer.DataseerTrainerRunner'
-    classpath = sourceSets.main.runtimeClasspath
-    args '3', 'dataseer', getArg('gH', '../grobid-home'), getArg('n', 10), getArg('t', '0')
-    if (JavaVersion.current().compareTo(JavaVersion.VERSION_1_8) > 0) {
-        jvmArgs '-Xms2g', '-Xmx8g', "--add-opens", "java.base/java.lang=ALL-UNNAMED"
-    } else {
-        jvmArgs '-Xms2g', '-Xmx8g'
-    }
-    systemProperty "java.library.path", "${System.getProperty('java.library.path')}:" + getJavaLibraryPath()
-}
-
-// Run like this: ./gradlew annotated_corpus_generator_csv -Pfull=/path/input/fulltext -Ppdf=/path/input/pdf -Pcsv=/path/csv -Pxml=/output/directory
-task(annotated_corpus_generator_csv, dependsOn: 'classes', type: JavaExec, group: 'import') {
-    mainClass = 'org.grobid.trainer.AnnotatedCorpusGeneratorCSV'
-    classpath = sourceSets.main.runtimeClasspath
-    args getArg('full', ''), getArg('pdf', ''), getArg('csv', ''), getArg('xml', 'resources/dataset/dataseer/corpus/')
-    if (JavaVersion.current().compareTo(JavaVersion.VERSION_1_8) > 0) {
-        jvmArgs '-Xms2g', '-Xmx8g', "--add-opens", "java.base/java.lang=ALL-UNNAMED"
-    } else {
-        jvmArgs '-Xms2g', '-Xmx8g'
-    }
-    systemProperty "java.library.path", "${System.getProperty('java.library.path')}:" + getJavaLibraryPath()
+    gradleVersion = "8.5"
 }
 
 //////////
 // service
 apply plugin: 'application'
 application {
-    mainClassName = 'org.grobid.service.DatastetApplication'
+    mainClass = 'org.grobid.service.DatastetApplication'
 
     run {
         if (JavaVersion.current().compareTo(JavaVersion.VERSION_1_8) > 0) {
@@ -468,5 +383,5 @@ jacocoTestReport {
 }
 
 coveralls {
-    jacocoReportPath 'build/reports/jacoco/test/jacocoTestReport.xml'
+    jacocoReportPath = 'build/reports/jacoco/test/jacocoTestReport.xml'
 }

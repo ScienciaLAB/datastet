@@ -2,7 +2,7 @@
 # build builder image
 # -------------------
 
-FROM openjdk:17-jdk-slim as builder
+FROM eclipse-temurin:21.0.10_7-jdk AS builder
 
 USER root
 
@@ -18,10 +18,9 @@ COPY resources/config/config-docker.yml datastet-source/resources/config/config.
 COPY resources/models datastet-source/resources/models
 COPY resources/lexicon datastet-source/resources/lexicon
 COPY build.gradle datastet-source/
-COPY gradle.properties datastet-source/
 COPY gradle datastet-source/gradle/
 COPY gradlew datastet-source/
-#COPY .git datastet-source/.git
+COPY .git datastet-source/.git
 COPY localLibs datastet-source/localLibs
 
 # Preparing models
@@ -30,11 +29,13 @@ RUN rm -rf /opt/grobid/grobid-home/models/*
 RUN ./gradlew clean assemble -x shadowJar --no-daemon  --stacktrace --info
 RUN git lfs install
 RUN ./gradlew installModels  --no-daemon --info --stacktrace \
-    && rm -f /opt/grobid/grobid-home/models/*.zip
+    && rm -f /opt/grobid/grobid-home/models/*.zip \
+    && rm -rf /opt/grobid/grobid-home/models/datastet
 
 # Preparing distribution
 WORKDIR /opt/grobid
-RUN unzip -o /opt/grobid/datastet-source/build/distributions/datastet-*.zip -d datastet_distribution \
+RUN rm -f /opt/grobid/datastet-source/build/distributions/datastet-shadow* \
+  && unzip -o /opt/grobid/datastet-source/build/distributions/datastet-*.zip -d datastet_distribution \
   && mv datastet_distribution/datastet-* datastet \
   && rm -rf /opt/grobid/datastet-source/build
 
@@ -50,7 +51,7 @@ RUN wget https://github.com/kermitt2/Pub2TEI/archive/refs/heads/master.zip && \
 # build runtime image
 # -------------------
 
-FROM lfoppiano/grobid:0.8.2-full as runtime
+FROM lfoppiano/grobid:0.9.0-full AS runtime
 
 # setting locale is likely useless but to be sure
 ENV LANG C.UTF-8
@@ -72,15 +73,6 @@ COPY --from=builder /opt/Pub2TEI /opt/Pub2TEI
 
 VOLUME ["/opt/grobid/grobid-home/tmp"]
 
-#WORKDIR /opt/grobid
-
-# install ELMo
-#RUN wget https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x4096_512_2048cnn_2xhighway_5.5B/elmo_2x4096_512_2048cnn_2xhighway_5.5B_options.json
-#RUN wget https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x4096_512_2048cnn_2xhighway_5.5B/elmo_2x4096_512_2048cnn_2xhighway_5.5B_weights.hdf5
-#RUN mkdir /opt/elmo
-#RUN mv elmo_2x4096_512_2048cnn_2xhighway_5.5B_options.json /opt/elmo/
-#RUN mv elmo_2x4096_512_2048cnn_2xhighway_5.5B_weights.hdf5 /opt/elmo/
-
 # this will build and load embeddings on the image forever (only if required by the config) :)
 # LF: AFAIK this is not needed at the moment as all the models are running with bert, but might
 # be a solution if we want to support the GRU version
@@ -88,8 +80,7 @@ VOLUME ["/opt/grobid/grobid-home/tmp"]
 
 ARG GROBID_VERSION
 ENV GROBID_VERSION=${GROBID_VERSION:-latest}
-ENV DATASTET_OPTS "-Djava.library.path=/opt/grobid/grobid-home/lib/lin-64:/usr/local/lib/python3.8/dist-packages/jep --add-opens java.base/java.lang=ALL-UNNAMED"
-
+ENV DATASTET_OPTS="-Djava.library.path=/opt/grobid/grobid-home/lib/lin-64:/usr/local/lib/python3.11/dist-packages/jep --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED"
 
 CMD ["./datastet/bin/datastet", "server", "datastet/resources/config/config.yml"]
 
