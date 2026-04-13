@@ -2441,7 +2441,7 @@ for(String sentence : allSentences) {
      * TEI all references' offsets are local to the sentence
      */
     public List<List<Dataset>> attachRefBibSimple(List<List<Dataset>> entities, List<List<BiblioComponent>> refBibComponents) {
-        return attachRefBibSimple(entities, refBibComponents, 5);
+        return attachRefBibSimple(entities, refBibComponents, 10);
     }
 
     public List<List<Dataset>> attachRefBibSimple(List<List<Dataset>> datasetsSequences, List<List<BiblioComponent>> referencesSequences, int distance) {
@@ -2450,6 +2450,8 @@ for(String sentence : allSentences) {
         // if we cross a bib ref component we attach it, if a bib ref component is just after the last
         // component of the entity group, we attach it
         for (int seqIdx = 0; seqIdx < datasetsSequences.size(); seqIdx++) {
+            if (seqIdx >= referencesSequences.size())
+                break;
             List<Dataset> datasets = datasetsSequences.get(seqIdx);
             List<BiblioComponent> references = referencesSequences.get(seqIdx);
 
@@ -2461,7 +2463,7 @@ for(String sentence : allSentences) {
                 DatasetComponent nameComponent = dataset.getDatasetName();
                 int datasetEndPosition = nameComponent.getOffsetEnd();
 
-                // find included or just next bib ref callout within a distance of 5 characters
+                // find included or just next bib ref callout within the distance after the dataset mention
                 List<BiblioComponent> relatedReferences = references.stream()
                         .filter(ref -> ref.getOffsetStart() >= datasetEndPosition && ref.getOffsetStart() <= datasetEndPosition + distance)
                         .collect(Collectors.toList());
