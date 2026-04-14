@@ -1773,7 +1773,7 @@ for(String sentence : allSentences) {
 
                     String text = paragraphAnnex.getTextContent();
                     String normalizedText = normalize(text);
-                    String itemId = ((org.w3c.dom.Element) item).getAttribute("xml:id");
+                    String itemId = ((org.w3c.dom.Element) paragraphAnnex).getAttribute("xml:id");
                     DatasetDocumentSequence localSequence = new DatasetDocumentSequence(normalizedText, itemId);
 
                     selectedSequences.add(localSequence);
@@ -1865,7 +1865,7 @@ for(String sentence : allSentences) {
 
                     String text = paragraphAnnex.getTextContent();
                     String normalizedText = normalize(text);
-                    String itemId = ((org.w3c.dom.Element) item).getAttribute("xml:id");
+                    String itemId = ((org.w3c.dom.Element) paragraphAnnex).getAttribute("xml:id");
                     DatasetDocumentSequence localSequence = new DatasetDocumentSequence(normalizedText, itemId);
 
                     selectedSequences.add(localSequence);
