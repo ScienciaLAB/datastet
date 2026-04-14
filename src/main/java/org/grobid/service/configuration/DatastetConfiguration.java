@@ -21,6 +21,7 @@ public class DatastetConfiguration {
     private Boolean useBinaryContextClassifiers;
     private String entityFishingHost;
     private String entityFishingPort;
+    private Boolean modelPreload;
 
     //models (sequence labeling and text classifiers)
     private List<GrobidConfig.ModelParameters> models = new ArrayList<>();
@@ -134,6 +135,21 @@ public class DatastetConfiguration {
 
     public void setEntityFishingPort(String entityFishingPort) {
         this.entityFishingPort = entityFishingPort;
+    }
+
+    /**
+     * Whether to eagerly load all models at service startup (so that model
+     * failures surface immediately and are reported via the /service/health
+     * endpoint). When {@code null} or {@code true} (default), models are
+     * preloaded; when {@code false} models are loaded lazily on first use,
+     * preserving the previous behaviour.
+     */
+    public Boolean getModelPreload() {
+        return modelPreload;
+    }
+
+    public void setModelPreload(Boolean modelPreload) {
+        this.modelPreload = modelPreload;
     }
 }
  
