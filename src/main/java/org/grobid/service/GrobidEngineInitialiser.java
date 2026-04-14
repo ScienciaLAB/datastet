@@ -64,8 +64,23 @@ public class GrobidEngineInitialiser {
 
         // Eagerly initialise the models so that failures surface at startup
         // (and are reported via the /service/health diagnostic endpoint)
-        // instead of only on the first request.
-        preloadModels(configuration);
+        // instead of only on the first request. This is gated on the
+        // `modelPreload` configuration flag (default: enabled), matching
+        // grobid's convention.
+        if (isModelPreloadEnabled(datastetConfiguration)) {
+            preloadModels(configuration);
+        } else {
+            LOGGER.info("Model preloading is disabled (modelPreload=false); " +
+                    "models will be loaded lazily on first request.");
+        }
+    }
+
+    private static boolean isModelPreloadEnabled(DatastetConfiguration datastetConfiguration) {
+        if (datastetConfiguration == null) {
+            return true;
+        }
+        Boolean flag = datastetConfiguration.getModelPreload();
+        return flag == null || flag;
     }
 
     /**
