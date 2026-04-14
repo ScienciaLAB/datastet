@@ -16,6 +16,8 @@ public class DatastetServiceConfiguration extends Configuration {
     private String version;
     private String entityFishingHost;
     private String entityFishingPort;
+    private String gluttonHost;
+    private String gluttonPort;
     private String corpusPath;
     private String templatePath;
     private String tmpPath;
@@ -75,6 +77,22 @@ public class DatastetServiceConfiguration extends Configuration {
 
     public void setEntityFishingPort(String entityFishingPort) {
         this.entityFishingPort = entityFishingPort;
+    }
+
+    public String getGluttonHost() {
+        return gluttonHost;
+    }
+
+    public void setGluttonHost(String gluttonHost) {
+        this.gluttonHost = gluttonHost;
+    }
+
+    public String getGluttonPort() {
+        return gluttonPort;
+    }
+
+    public void setGluttonPort(String gluttonPort) {
+        this.gluttonPort = gluttonPort;
     }
 
     public String getCorpusPath() {
