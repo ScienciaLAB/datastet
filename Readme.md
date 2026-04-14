@@ -33,7 +33,7 @@ The easiest way to deploy and run the service is to use the Docker image.
 It's possible to use a Docker image via [docker HUB](https://hub.docker.com/r/grobid/datastet), pull the image (5.25GB) as follows:
 
 ```bash
-docker pull grobid/datastet:0.8.0
+docker pull grobid/datastet:0.9.0
 ```
 
 (check the latest version on project's [docker HUB](https://hub.docker.com/r/grobid/datastet)!)
@@ -41,7 +41,7 @@ docker pull grobid/datastet:0.8.0
 After pulling or building the Docker image, you can now run the `datastet` service as a container:
 
 ```bash
->  docker run --rm --gpus all -it --init --ulimit core=0 -p 8060:8060 grobid/datastet:0.8.0
+>  docker run --rm --gpus all -it --init --ulimit core=0 -p 8060:8060 grobid/datastet:0.9.0
 ```
 
 The build image includes the automatic support of GPU when available on the host machine via the parameter `--gpus all` (with automatic recognition of the CUDA version), with fall back to CPU if GPU are not available. 
@@ -51,7 +51,7 @@ The `datastet` service is available at the default host/port `localhost:8060`, b
 launch time of the container as follow:
 
 ```bash
-> docker run --rm --gpus all -it --init --ulimit core=0 -p 8080:8060 grobid/datastet:0.8.0
+> docker run --rm --gpus all -it --init --ulimit core=0 -p 8080:8060 grobid/datastet:0.9.0
 ```
 
 By default, BidLSTM-CFR with ELMo model if used for the dataset mention recognition (it performs better than SciBERT with 3 points F1-score). 
@@ -59,7 +59,7 @@ Every classification models are fine-tuned SciBERT models.
 To modify the configuration without rebuilding the image - for instance rather use the SciBERT model, it is possible to mount a modified config file at launch as follows:
 
 ```bash
-> docker run --rm --gpus all -it --init --ulimit core=0 -p 8060:8060 -v /home/lopez/grobid/datastet/resources/config/config.yml:/opt/grobid/datastet/resources/config/config.yml:ro  grobid/datastet:0.8.0
+> docker run --rm --gpus all -it --init --ulimit core=0 -p 8060:8060 -v /home/lopez/grobid/datastet/resources/config/config.yml:/opt/grobid/datastet/resources/config/config.yml:ro  grobid/datastet:0.9.0
 ```
 
 As an alterntive, a docker image for the `datastet` service can be built with the project Dockerfile to match the
@@ -74,7 +74,7 @@ current master version. The complete process is as follows:
 - from the GROBID root installation (`grobid/`), launch the docker build:
 
 ```bash
-> docker build -t grobid/datastet:0.8.0 --build-arg GROBID_VERSION=0.8.0 --file Dockerfile.datastet .
+> docker build -t grobid/datastet:0.9.0 --build-arg GROBID_VERSION=0.9.0 --file Dockerfile.datastet .
 ```
 
 The Docker image build take several minutes, installing GROBID, datastet, a complete Python Deep Learning environment based on [DeLFT](https://github.com/kermitt2/delft) and deep learning models downloaded from the internet (one fine-tuned model with a BERT layer has a size of around 400 MB). 
@@ -82,7 +82,7 @@ The resulting image is thus very large, more than 10GB, due to the deep learning
 
 ## Build & Run
 
-Building the module requires JDK 1.8 or higher. First install and build the latest development version of GROBID (currently `0.8.2-SNAPSHOT`) as explained by the [documentation](http://grobid.readthedocs.org), together with [DeLFT](https://github.com/kermitt2/delft) (currently version `0.3.2`) for Deep Learning model support.
+Building the module requires JDK 1.8 or higher. First install and build the latest development version of GROBID (currently `0.9.0`) as explained by the [documentation](http://grobid.readthedocs.org), together with [DeLFT](https://github.com/kermitt2/delft) (currently version `0.3.2`) for Deep Learning model support.
 
 Under the installed and built `grobid/` directory, clone the present module `datastet` (it will appear as sibling sub-project to grobid-core, grobid-trainer, etc.):
 
@@ -201,7 +201,7 @@ The output data format is JSON format as follows:
 ```json 
 {
   "application" : "datastet",
-  "version" : "0.8.0",
+  "version" : "0.9.0",
   "date" : "2024-10-04T07:31+0000",
   "md5" : "F1F1BC4C79AC8A8E85D1EAF4265B97FB",
   "mentions" : [ {

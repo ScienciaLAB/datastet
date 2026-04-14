@@ -83,6 +83,10 @@ public class DatasetParser extends AbstractParser {
     private static final java.util.concurrent.atomic.AtomicBoolean disambiguatorWarningLogged =
             new java.util.concurrent.atomic.AtomicBoolean(false);
 
+    // guard to warn only once about the context classifier not being available
+    private static final java.util.concurrent.atomic.AtomicBoolean contextClassifierWarningLogged =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+
     private EngineParsers parsers;
     private DatastetServiceConfiguration datastetConfiguration;
     private DataTypeClassifier dataTypeClassifier;
@@ -98,6 +102,12 @@ public class DatasetParser extends AbstractParser {
     private static void warnDisambiguatorNotAvailableOnce() {
         if (disambiguatorWarningLogged.compareAndSet(false, true)) {
             LOGGER.warn("Dataset disambiguator is not available, dataset disambiguation will be skipped");
+        }
+    }
+
+    private static void warnContextClassifierNotAvailableOnce() {
+        if (contextClassifierWarningLogged.compareAndSet(false, true)) {
+            LOGGER.warn("Dataset context classifier is not available, context classification will be skipped");
         }
     }
 
@@ -128,12 +138,16 @@ public class DatasetParser extends AbstractParser {
                 GrobidCRFEngine.valueOf(configuration.getDatastetConfiguration().getModel("datasets").engine.toUpperCase()),
                 configuration.getDatastetConfiguration().getModel("datasets").delft.architecture);
 
-        this.dataTypeClassifier = dataTypeClassifier;
         DatastetLexicon.getInstance();
         this.parsers = new EngineParsers();
         this.datastetConfiguration = configuration;
         this.disambiguator = DatasetDisambiguator.getInstance(configuration.getDatastetConfiguration());
-        this.datasetContextClassifier = datasetContextClassifier;
+        try {
+            this.datasetContextClassifier = DatasetContextClassifier.getInstance(configuration);
+        } catch (Exception e) {
+            LOGGER.warn("Dataset context classifier is not available, context classification will be skipped", e);
+            this.datasetContextClassifier = null;
+        }
     }
 
     public List<List<Dataset>> processing(List<DatasetDocumentSequence> tokensList) {
@@ -1482,7 +1496,11 @@ for(String sentence : allSentences) {
                 entities = markDAS(entities, availabilityTokens);
 
             // finally classify the context for predicting the role of the dataset mention
-            entities = this.datasetContextClassifier.classifyDocumentContexts(entities);
+            if (this.datasetContextClassifier != null) {
+                entities = this.datasetContextClassifier.classifyDocumentContexts(entities);
+            } else {
+                warnContextClassifierNotAvailableOnce();
+            }
 
         } catch (Exception e) {
             //e.printStackTrace();
