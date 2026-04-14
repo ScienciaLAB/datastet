@@ -75,11 +75,21 @@ public class DatasetParser extends AbstractParser {
 
     private static volatile DatasetParser instance;
 
+    // guard to warn only once about Glutton not being configured
+    private static final java.util.concurrent.atomic.AtomicBoolean gluttonWarningLogged =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+
     private EngineParsers parsers;
     private DatastetServiceConfiguration datastetConfiguration;
     private DataTypeClassifier dataTypeClassifier;
     private DatasetContextClassifier datasetContextClassifier;
     private DatasetDisambiguator disambiguator;
+
+    private static void warnGluttonNotConfiguredOnce() {
+        if (gluttonWarningLogged.compareAndSet(false, true)) {
+            LOGGER.warn("Glutton host not configured, bibliographical reference consolidation will be skipped");
+        }
+    }
 
     public static DatasetParser getInstance(
             DatastetServiceConfiguration configuration,
@@ -1053,19 +1063,23 @@ System.out.println(localDatasetcomponent.toJson());
                             }
                         }
 
-                        try {
-                            Consolidation consolidator = Consolidation.getInstance();
-                            Map<Integer, BiblioItem> resConsolidation = consolidator.consolidate(citationsToConsolidate);
-                            for (int j = 0; j < citationsToConsolidate.size(); j++) {
-                                BiblioItem resCitation = citationsToConsolidate.get(j).getResBib();
-                                BiblioItem bibo = resConsolidation.get(j);
-                                if (bibo != null) {
-                                    BiblioItem.correct(resCitation, bibo);
+                        if (StringUtils.isNotBlank(datastetConfiguration.getDatastetConfiguration().getGluttonHost())) {
+                            try {
+                                Consolidation consolidator = Consolidation.getInstance();
+                                Map<Integer, BiblioItem> resConsolidation = consolidator.consolidate(citationsToConsolidate);
+                                for (int j = 0; j < citationsToConsolidate.size(); j++) {
+                                    BiblioItem resCitation = citationsToConsolidate.get(j).getResBib();
+                                    BiblioItem bibo = resConsolidation.get(j);
+                                    if (bibo != null) {
+                                        BiblioItem.correct(resCitation, bibo);
+                                    }
                                 }
+                            } catch (Exception e) {
+                                LOGGER.warn("Glutton is not reachable, bibliographical reference consolidation will be skipped: "
+                                        + e.getMessage());
                             }
-                        } catch (Exception e) {
-                            throw new GrobidException(
-                                    "An exception occured while running consolidation on bibliographical references.", e);
+                        } else {
+                            warnGluttonNotConfiguredOnce();
                         }
 
                         // propagate the bib. ref. to the entities corresponding to the same dataset name without bib. ref.
@@ -1403,19 +1417,23 @@ for(String sentence : allSentences) {
                     }
                 }
 
-                try {
-                    Consolidation consolidator = Consolidation.getInstance();
-                    Map<Integer, BiblioItem> resConsolidation = consolidator.consolidate(citationsToConsolidate);
-                    for (int j = 0; j < citationsToConsolidate.size(); j++) {
-                        BiblioItem resCitation = citationsToConsolidate.get(j).getResBib();
-                        BiblioItem bibo = resConsolidation.get(j);
-                        if (bibo != null) {
-                            BiblioItem.correct(resCitation, bibo);
+                if (StringUtils.isNotBlank(datastetConfiguration.getDatastetConfiguration().getGluttonHost())) {
+                    try {
+                        Consolidation consolidator = Consolidation.getInstance();
+                        Map<Integer, BiblioItem> resConsolidation = consolidator.consolidate(citationsToConsolidate);
+                        for (int j = 0; j < citationsToConsolidate.size(); j++) {
+                            BiblioItem resCitation = citationsToConsolidate.get(j).getResBib();
+                            BiblioItem bibo = resConsolidation.get(j);
+                            if (bibo != null) {
+                                BiblioItem.correct(resCitation, bibo);
+                            }
                         }
+                    } catch (Exception e) {
+                        LOGGER.warn("Glutton is not reachable, bibliographical reference consolidation will be skipped: "
+                                + e.getMessage());
                     }
-                } catch (Exception e) {
-                    throw new GrobidException(
-                            "An exception occured while running consolidation on bibliographical references.", e);
+                } else {
+                    warnGluttonNotConfiguredOnce();
                 }
 
                 // propagate the bib. ref. to the entities corresponding to the same dataset name without bib. ref.
@@ -2227,9 +2245,11 @@ for(String sentence : allSentences) {
                     }
                 }
             } catch (Exception e) {
-                throw new GrobidException(
-                        "An exception occurred while running consolidation on bibliographical references.", e);
+                LOGGER.warn("Glutton is not reachable, bibliographical reference consolidation will be skipped: "
+                        + e.getMessage());
             }
+        } else {
+            warnGluttonNotConfiguredOnce();
         }
 
         // propagate the bib. ref. to the entities corresponding to the same dataset name without bib. ref.
