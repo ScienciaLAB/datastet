@@ -13,7 +13,7 @@ import org.grobid.core.data.Dataset;
 import org.grobid.core.data.Dataset.DatasetType;
 import org.grobid.core.engines.DataTypeClassifier;
 import org.grobid.core.engines.DatasetParser;
-import org.grobid.service.configuration.DatastetConfiguration;
+import org.grobid.service.configuration.DatastetServiceConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,18 +30,19 @@ public class DatastetProcessString {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DatastetProcessString.class);
 
-    private final DatastetConfiguration datastetConfiguration;
-    private final DataTypeClassifier dataTypeClassifier;
-    private final DatasetParser datasetParser;
+    private final DatastetServiceConfiguration serviceConfiguration;
 
     @Inject
-    public DatastetProcessString(DatastetConfiguration configuration,
-                                 DatasetParser datasetParser,
-                                 DataTypeClassifier dataTypeClassifier) {
+    public DatastetProcessString(DatastetServiceConfiguration serviceConfiguration) {
+        this.serviceConfiguration = serviceConfiguration;
+    }
 
-        this.datasetParser = datasetParser;
-        this.dataTypeClassifier = dataTypeClassifier;
-        this.datastetConfiguration = configuration;
+    private DatasetParser getDatasetParser() {
+        return DatasetParser.getInstance(serviceConfiguration, null, null, null);
+    }
+
+    private DataTypeClassifier getDataTypeClassifier() {
+        return DataTypeClassifier.getInstance();
     }
 
     /**
@@ -58,10 +59,10 @@ public class DatastetProcessString {
 
             text = text.replaceAll("\\n", " ").replaceAll("\\t", " ");
             long start = System.currentTimeMillis();
-            String retValString = this.dataTypeClassifier.classify(text);
+            String retValString = getDataTypeClassifier().classify(text);
             long end = System.currentTimeMillis();
 
-            // TBD: update json with runtime and software/version 
+            // TBD: update json with runtime and software/version
 
             if (!isResultOK(retValString)) {
                 response = Response.status(Response.Status.NO_CONTENT).build();
@@ -111,7 +112,7 @@ public class DatastetProcessString {
 //                    .collect(Collectors.toList());
 
             long start = System.currentTimeMillis();
-            String retValString = this.dataTypeClassifier.classify(texts);
+            String retValString = getDataTypeClassifier().classify(texts);
             long end = System.currentTimeMillis();
 
             if (!isResultOK(retValString)) {
@@ -148,12 +149,12 @@ public class DatastetProcessString {
 
             text = text.replaceAll("\\n", " ").replaceAll("\\t", " ");
             long start = System.currentTimeMillis();
-            List<Dataset> result = this.datasetParser.processingString(text, disambiguate);
+            List<Dataset> result = getDatasetParser().processingString(text, disambiguate);
 
             // building JSON response
             StringBuilder json = new StringBuilder();
             json.append("{");
-            json.append(DatastetServiceUtils.applicationDetails(this.datastetConfiguration.getVersion()));
+            json.append(DatastetServiceUtils.applicationDetails(serviceConfiguration.getVersion()));
 
             byte[] encoded = encoder.quoteAsUTF8(text);
             String output = new String(encoded);
@@ -163,7 +164,7 @@ public class DatastetProcessString {
 
             ObjectMapper mapper = new ObjectMapper();
 
-            String classifierJson = dataTypeClassifier.classify(text);
+            String classifierJson = getDataTypeClassifier().classify(text);
 
             JsonNode rootNode = mapper.readTree(classifierJson);
 

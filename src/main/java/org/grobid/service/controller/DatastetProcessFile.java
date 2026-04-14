@@ -3,7 +3,6 @@ package org.grobid.service.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.apache.commons.collections4.CollectionUtils;
@@ -12,13 +11,11 @@ import org.grobid.core.data.BibDataSet;
 import org.grobid.core.data.Dataset;
 import org.grobid.core.document.Document;
 import org.grobid.core.document.DocumentSource;
-import org.grobid.core.engines.DataTypeClassifier;
 import org.grobid.core.engines.DatasetParser;
 import org.grobid.core.layout.Page;
-import org.grobid.core.utilities.ArticleUtilities;
 import org.grobid.core.utilities.GrobidProperties;
 import org.grobid.core.utilities.IOUtilities;
-import org.grobid.service.configuration.DatastetConfiguration;
+import org.grobid.service.configuration.DatastetServiceConfiguration;
 import org.grobid.service.exceptions.DatastetServiceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,18 +38,15 @@ public class DatastetProcessFile {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DatastetProcessFile.class);
 
-    private final DatastetConfiguration datastetConfiguration;
-    private final DataTypeClassifier dataTypeClassifier;
-    private final DatasetParser datasetParser;
+    private final DatastetServiceConfiguration serviceConfiguration;
 
     @Inject
-    public DatastetProcessFile(DatastetConfiguration configuration,
-                               DatasetParser datasetParser,
-                               DataTypeClassifier dataTypeClassifier) {
+    public DatastetProcessFile(DatastetServiceConfiguration serviceConfiguration) {
+        this.serviceConfiguration = serviceConfiguration;
+    }
 
-        this.datasetParser = datasetParser;
-        this.dataTypeClassifier = dataTypeClassifier;
-        this.datastetConfiguration = configuration;
+    private DatasetParser getDatasetParser() {
+        return DatasetParser.getInstance(serviceConfiguration, null, null, null);
     }
 
     /**
@@ -92,11 +86,11 @@ public class DatastetProcessFile {
 
             long start = System.currentTimeMillis();
             // starts conversion process
-            extractedResults = this.datasetParser.processPDF(originFile, disambiguate);
+            extractedResults = getDatasetParser().processPDF(originFile, disambiguate);
 
             StringBuilder json = new StringBuilder();
             json.append("{ ");
-            json.append(DatastetServiceUtils.applicationDetails(this.datastetConfiguration.getVersion()));
+            json.append(DatastetServiceUtils.applicationDetails(serviceConfiguration.getVersion()));
 
             String md5Str = DatatypeConverter.printHexBinary(digest).toUpperCase();
             json.append(", \"md5\": \"" + md5Str + "\"");
@@ -190,7 +184,7 @@ public class DatastetProcessFile {
             } else {
                 long start = System.currentTimeMillis();
 
-                Pair<List<List<Dataset>>, List<BibDataSet>> extractionResult = this.datasetParser.processXML(originFile, false, disambiguate);
+                Pair<List<List<Dataset>>, List<BibDataSet>> extractionResult = getDatasetParser().processXML(originFile, false, disambiguate);
                 long end = System.currentTimeMillis();
 
                 List<List<Dataset>> extractedEntities = null;
@@ -289,7 +283,7 @@ public class DatastetProcessFile {
                 response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
             } else {
                 long start = System.currentTimeMillis();
-                Pair<List<List<Dataset>>, List<BibDataSet>> extractionResult = this.datasetParser.processTEI(originFile, segmentSentences, disambiguate);
+                Pair<List<List<Dataset>>, List<BibDataSet>> extractionResult = getDatasetParser().processTEI(originFile, segmentSentences, disambiguate);
                 long end = System.currentTimeMillis();
 
                 List<List<Dataset>> extractedEntities = null;
