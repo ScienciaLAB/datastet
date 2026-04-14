@@ -22,6 +22,12 @@ entityFishingPort: 443
 # binary classifiers perform better, but heavier to use
 useBinaryContextClassifiers: false
 
+# if true (default), all models are loaded at service startup so that failures
+# surface immediately and are reported via the /service/health endpoint.
+# Set to false to restore the previous behaviour of loading each model lazily
+# on first request.
+#modelPreload: true
+
 # sequence labeling model (identify data-related sections)
 models:
 

@@ -23,6 +23,7 @@ public class DatastetServiceConfiguration extends Configuration {
     private String tmpPath;
     private String pub2teiPath;
     private Boolean useBinaryContextClassifiers;
+    private Boolean modelPreload;
     private List<GrobidConfig.ModelParameters> models = new ArrayList<>();
 
     @JsonProperty
@@ -133,6 +134,14 @@ public class DatastetServiceConfiguration extends Configuration {
 
     public void setUseBinaryContextClassifiers(Boolean useBinaryContextClassifiers) {
         this.useBinaryContextClassifiers = useBinaryContextClassifiers;
+    }
+
+    public Boolean getModelPreload() {
+        return modelPreload;
+    }
+
+    public void setModelPreload(Boolean modelPreload) {
+        this.modelPreload = modelPreload;
     }
 
     public List<GrobidConfig.ModelParameters> getModels() {
