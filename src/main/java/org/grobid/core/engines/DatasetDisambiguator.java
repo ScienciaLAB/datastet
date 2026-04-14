@@ -69,11 +69,21 @@ public class DatasetDisambiguator {
         try {
             nerd_host = configuration.getEntityFishingHost();
             nerd_port = configuration.getEntityFishingPort();
+            if (StringUtils.isBlank(nerd_host)) {
+                LOGGER.warn("entity-fishing host not configured, dataset disambiguation will be skipped");
+                serverStatus = false;
+                return;
+            }
             serverStatus = checkIfAlive();
-            if (serverStatus)
+            if (serverStatus) {
                 ensureCustomizationReady();
+            } else {
+                LOGGER.warn("entity-fishing service is not reachable at " + nerd_host
+                        + (StringUtils.isNotBlank(nerd_port) ? ":" + nerd_port : "")
+                        + ", dataset disambiguation will be skipped");
+            }
         } catch (Exception e) {
-            LOGGER.error("Cannot read properties for disambiguation service", e);
+            LOGGER.warn("Cannot initialise entity-fishing disambiguation service, it will be skipped: " + e.getMessage());
         }
     }
 
@@ -111,7 +121,7 @@ public class DatasetDisambiguator {
                 try (CloseableHttpResponse response = httpClient.execute(get)) {
                     int code = response.getStatusLine().getStatusCode();
                     if (code != 200) {
-                        LOGGER.error("Failed isalive service for disambiguation service entity-fishing, HTTP error code : " + code);
+                        LOGGER.warn("entity-fishing isalive returned HTTP " + code + ", disambiguation will be skipped");
                         return false;
                     } else {
                         result = true;
@@ -120,11 +130,11 @@ public class DatasetDisambiguator {
             }
 
         } catch (MalformedURLException e) {
-            LOGGER.error("Disambiguation service not available: MalformedURLException");
+            LOGGER.warn("entity-fishing URL is malformed, disambiguation will be skipped");
         } catch (HttpHostConnectException e) {
-            LOGGER.error("Cannot connect to the disambiguation service");
+            LOGGER.warn("entity-fishing is not reachable, disambiguation will be skipped");
         } catch (Exception e) {
-            LOGGER.error("Disambiguation service not available: generic error", e);
+            LOGGER.warn("entity-fishing is not available (" + e.getClass().getSimpleName() + "), disambiguation will be skipped");
         }
 
         return result;
@@ -167,11 +177,11 @@ public class DatasetDisambiguator {
                     response.close();
             }
         } catch (MalformedURLException e) {
-            LOGGER.error("disambiguation service not available: MalformedURLException");
+            LOGGER.warn("entity-fishing URL is malformed, customization skipped");
         } catch (HttpHostConnectException e) {
-            LOGGER.error("cannot connect to the disambiguation service");
+            LOGGER.warn("entity-fishing is not reachable, customization skipped");
         } catch (Exception e) {
-            LOGGER.error("disambiguation service not available", e);
+            LOGGER.warn("entity-fishing customization lookup failed: " + e.getMessage());
         }
 
         if (!result && url != null) {
@@ -238,11 +248,13 @@ public class DatasetDisambiguator {
     public List<Dataset> disambiguate(List<Dataset> entities, List<LayoutToken> tokens) {
         if ((entities == null) || (entities.size() == 0))
             return entities;
+        if (!serverStatus)
+            return entities;
         String json = null;
         try {
             json = runNerd(entities, tokens, "en");
         } catch (RuntimeException e) {
-            LOGGER.error("Call to entity-fishing failed.", e);
+            LOGGER.warn("Call to entity-fishing failed, disambiguation skipped: " + e.getMessage());
         }
         if (json == null)
             return entities;
@@ -448,8 +460,7 @@ public class DatasetDisambiguator {
             // e.g. [{"weight" : 0.16666666666666666, "source" : "wikipedia-en", "category" : "Bioinformatics", "page_id" : 726312}, ...
 
         } catch (Exception e) {
-            LOGGER.error("Invalid JSON answer from the NERD", e);
-            e.printStackTrace();
+            LOGGER.warn("Invalid JSON answer from entity-fishing, disambiguation skipped: " + e.getMessage());
         }
 
         return entities;
@@ -566,7 +577,7 @@ public class DatasetDisambiguator {
 
                 int code = response.getStatusLine().getStatusCode();
                 if (code != 200) {
-                    LOGGER.error("Failed annotating text segment: HTTP error code : " + code);
+                    LOGGER.warn("entity-fishing annotation returned HTTP " + code + ", disambiguation skipped");
                     return null;
                 }
 
@@ -584,9 +595,9 @@ public class DatasetDisambiguator {
                     response.close();
             }
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            LOGGER.warn("entity-fishing URL is malformed, disambiguation skipped");
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.warn("entity-fishing request failed, disambiguation skipped: " + e.getMessage());
         }
         return output.toString().trim();
     }
