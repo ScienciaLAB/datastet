@@ -9,6 +9,7 @@ import io.dropwizard.core.setup.Environment;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.eclipse.jetty.servlets.QoSFilter;
 import org.grobid.service.configuration.DatastetServiceConfiguration;
+import org.grobid.service.controller.HealthCheck;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,7 @@ public class DatastetApplication extends Application<DatastetServiceConfiguratio
 
     @Override
     public void run(DatastetServiceConfiguration configuration, Environment environment) {
+        environment.healthChecks().register("health-check", new HealthCheck(configuration));
 
         environment.jersey().setUrlPattern(RESOURCES + "/*");
 

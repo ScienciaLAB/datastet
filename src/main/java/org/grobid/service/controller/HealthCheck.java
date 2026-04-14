@@ -35,11 +35,11 @@ public class HealthCheck extends com.codahale.metrics.health.HealthCheck {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    @Inject
-    private DatastetServiceConfiguration configuration;
+    private final DatastetServiceConfiguration configuration;
 
     @Inject
-    public HealthCheck() {
+    public HealthCheck(DatastetServiceConfiguration configuration) {
+        this.configuration = configuration;
     }
 
     @GET
