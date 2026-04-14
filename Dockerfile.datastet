@@ -88,5 +88,5 @@ LABEL \
     authors="The contributors" \
     org.label-schema.name="datastet" \
     org.label-schema.description="Image with DataStet service" \
-    org.label-schema.url="https://github.com/DataSeer/datastet" \
+    org.label-schema.url="https://github.com/ScienciaLAB/datastet" \
     org.label-schema.version=${GROBID_VERSION}
