@@ -110,7 +110,6 @@ dependencies {
     implementation group: 'com.sun.xml.bind', name: 'jaxb-impl', version: '2.3.0'
 
     implementation group: 'javax.activation', name: 'activation', version: '1.1.1'
-    implementation group: 'asm', name: 'asm', version: '3.3.1'
 
     implementation 'black.ninia:jep:4.3.1'
     // for sentence segmentation only
