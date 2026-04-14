@@ -79,6 +79,10 @@ public class DatasetParser extends AbstractParser {
     private static final java.util.concurrent.atomic.AtomicBoolean gluttonWarningLogged =
             new java.util.concurrent.atomic.AtomicBoolean(false);
 
+    // guard to warn only once about the disambiguator not being available
+    private static final java.util.concurrent.atomic.AtomicBoolean disambiguatorWarningLogged =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+
     private EngineParsers parsers;
     private DatastetServiceConfiguration datastetConfiguration;
     private DataTypeClassifier dataTypeClassifier;
@@ -88,6 +92,12 @@ public class DatasetParser extends AbstractParser {
     private static void warnGluttonNotConfiguredOnce() {
         if (gluttonWarningLogged.compareAndSet(false, true)) {
             LOGGER.warn("Glutton host not configured, bibliographical reference consolidation will be skipped");
+        }
+    }
+
+    private static void warnDisambiguatorNotAvailableOnce() {
+        if (disambiguatorWarningLogged.compareAndSet(false, true)) {
+            LOGGER.warn("Dataset disambiguator is not available, dataset disambiguation will be skipped");
         }
     }
 
@@ -122,7 +132,7 @@ public class DatasetParser extends AbstractParser {
         DatastetLexicon.getInstance();
         this.parsers = new EngineParsers();
         this.datastetConfiguration = configuration;
-        this.disambiguator = disambiguator;
+        this.disambiguator = DatasetDisambiguator.getInstance(configuration.getDatastetConfiguration());
         this.datasetContextClassifier = datasetContextClassifier;
     }
 
@@ -273,22 +283,26 @@ System.out.println(localDatasetcomponent.toJson());
 
                 // disambiguation
                 if (disambiguate) {
-                    localDatasets = disambiguator.disambiguate(localDatasets, tokens);
+                    if (disambiguator != null) {
+                        localDatasets = disambiguator.disambiguate(localDatasets, tokens);
 
-                    // apply existing filtering
-                    indexToBeFiltered = new ArrayList<>();
-                    k = 0;
-                    for (Dataset entity : localDatasets) {
-                        if (entity.isFiltered()) {
-                            indexToBeFiltered.add(Integer.valueOf(k));
+                        // apply existing filtering
+                        indexToBeFiltered = new ArrayList<>();
+                        k = 0;
+                        for (Dataset entity : localDatasets) {
+                            if (entity.isFiltered()) {
+                                indexToBeFiltered.add(Integer.valueOf(k));
+                            }
+                            k++;
                         }
-                        k++;
-                    }
 
-                    if (indexToBeFiltered.size() > 0) {
-                        for (int j = indexToBeFiltered.size() - 1; j >= 0; j--) {
-                            localDatasets.remove(indexToBeFiltered.get(j).intValue());
+                        if (indexToBeFiltered.size() > 0) {
+                            for (int j = indexToBeFiltered.size() - 1; j >= 0; j--) {
+                                localDatasets.remove(indexToBeFiltered.get(j).intValue());
+                            }
                         }
+                    } else {
+                        warnDisambiguatorNotAvailableOnce();
                     }
                 }
 
