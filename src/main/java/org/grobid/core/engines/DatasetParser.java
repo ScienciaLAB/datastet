@@ -48,6 +48,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -97,13 +98,42 @@ public class DatasetParser extends AbstractParser {
 
     // Cached JAXP factories to avoid ServiceLoader churn and classloader-cache
     // accumulation across TEI/XML requests. Factories are not thread-safe for
-    // new*() calls, hence the synchronized helpers below.
+    // new*() calls, hence the synchronized helpers below. The factory is also
+    // hardened against XXE/SSRF since it parses user-supplied XML/TEI.
     private static final DocumentBuilderFactory DOC_BUILDER_FACTORY;
     private static final XPathFactory XPATH_FACTORY = XPathFactory.newInstance();
 
     static {
         DOC_BUILDER_FACTORY = DocumentBuilderFactory.newInstance();
         DOC_BUILDER_FACTORY.setNamespaceAware(true);
+        hardenDocumentBuilderFactory(DOC_BUILDER_FACTORY);
+    }
+
+    /**
+     * Apply a conservative XXE/SSRF hardening to a shared DocumentBuilderFactory.
+     * Each feature is set in its own try/catch so that unsupported features on a
+     * given JAXP implementation do not prevent class initialisation.
+     */
+    private static void hardenDocumentBuilderFactory(DocumentBuilderFactory factory) {
+        trySetFeature(factory, XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        trySetFeature(factory, "http://apache.org/xml/features/disallow-doctype-decl", true);
+        trySetFeature(factory, "http://xml.org/sax/features/external-general-entities", false);
+        trySetFeature(factory, "http://xml.org/sax/features/external-parameter-entities", false);
+        trySetFeature(factory, "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        try {
+            factory.setXIncludeAware(false);
+        } catch (UnsupportedOperationException | AbstractMethodError ignore) {
+            // older JAXP impls
+        }
+        factory.setExpandEntityReferences(false);
+    }
+
+    private static void trySetFeature(DocumentBuilderFactory factory, String feature, boolean value) {
+        try {
+            factory.setFeature(feature, value);
+        } catch (ParserConfigurationException e) {
+            LOGGER.debug("Unsupported DocumentBuilderFactory feature: {}", feature);
+        }
     }
 
     private static synchronized DocumentBuilder newDocumentBuilder()
@@ -1588,8 +1618,12 @@ for(String sentence : allSentences) {
             // Parse via an explicitly managed InputStream so the file handle is
             // released deterministically (DocumentBuilder.parse(File) defers stream
             // closure to Xerces internals, which accumulates FDs under load).
+            // Set systemId so relative references (DTD/entities/XInclude) and
+            // error locations behave as they did with parse(File).
             try (InputStream is = new FileInputStream(file)) {
-                document = builder.parse(new InputSource(is));
+                InputSource inputSource = new InputSource(is);
+                inputSource.setSystemId(file.toURI().toString());
+                document = builder.parse(inputSource);
             }
             org.w3c.dom.Element root = document.getDocumentElement();
             boolean hasSegmentation = hasTEISentenceSegmentation(root);

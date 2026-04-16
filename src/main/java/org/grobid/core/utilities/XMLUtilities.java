@@ -14,6 +14,7 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.xml.sax.InputSource;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -52,14 +53,80 @@ public class XMLUtilities {
     // builders/parsers/transformers that are themselves single-thread only.
     // Caching avoids repeated ServiceLoader discovery which, under sustained
     // TEI load, left classloader-backed references accumulating on the heap.
+    // Each factory is also hardened against XXE/SSRF since callers parse
+    // user-supplied XML/TEI; features are set defensively so unsupported
+    // options on a given JAXP implementation do not break class init.
     private static final DocumentBuilderFactory DBF;
-    private static final SAXParserFactory SPF = SAXParserFactory.newInstance();
+    private static final SAXParserFactory SPF;
     private static final XPathFactory XPF = XPathFactory.newInstance();
-    private static final TransformerFactory TF = TransformerFactory.newInstance();
+    private static final TransformerFactory TF;
 
     static {
         DBF = DocumentBuilderFactory.newInstance();
         DBF.setNamespaceAware(true);
+        hardenDocumentBuilderFactory(DBF);
+
+        SPF = SAXParserFactory.newInstance();
+        hardenSAXParserFactory(SPF);
+
+        TF = TransformerFactory.newInstance();
+        hardenTransformerFactory(TF);
+    }
+
+    private static void hardenDocumentBuilderFactory(DocumentBuilderFactory factory) {
+        trySetDBFeature(factory, XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        trySetDBFeature(factory, "http://apache.org/xml/features/disallow-doctype-decl", true);
+        trySetDBFeature(factory, "http://xml.org/sax/features/external-general-entities", false);
+        trySetDBFeature(factory, "http://xml.org/sax/features/external-parameter-entities", false);
+        trySetDBFeature(factory, "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        try {
+            factory.setXIncludeAware(false);
+        } catch (UnsupportedOperationException | AbstractMethodError ignore) {
+            // older JAXP impls
+        }
+        factory.setExpandEntityReferences(false);
+    }
+
+    private static void trySetDBFeature(DocumentBuilderFactory factory, String feature, boolean value) {
+        try {
+            factory.setFeature(feature, value);
+        } catch (ParserConfigurationException e) {
+            LOGGER.debug("Unsupported DocumentBuilderFactory feature: {}", feature);
+        }
+    }
+
+    private static void hardenSAXParserFactory(SAXParserFactory factory) {
+        trySetSPFeature(factory, XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        trySetSPFeature(factory, "http://apache.org/xml/features/disallow-doctype-decl", true);
+        trySetSPFeature(factory, "http://xml.org/sax/features/external-general-entities", false);
+        trySetSPFeature(factory, "http://xml.org/sax/features/external-parameter-entities", false);
+        trySetSPFeature(factory, "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+    }
+
+    private static void trySetSPFeature(SAXParserFactory factory, String feature, boolean value) {
+        try {
+            factory.setFeature(feature, value);
+        } catch (Exception e) {
+            LOGGER.debug("Unsupported SAXParserFactory feature: {}", feature);
+        }
+    }
+
+    private static void hardenTransformerFactory(TransformerFactory factory) {
+        try {
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        } catch (TransformerConfigurationException e) {
+            LOGGER.debug("Unsupported TransformerFactory feature: FEATURE_SECURE_PROCESSING");
+        }
+        trySetTFAttribute(factory, XMLConstants.ACCESS_EXTERNAL_DTD, "");
+        trySetTFAttribute(factory, XMLConstants.ACCESS_EXTERNAL_STYLESHEET, "");
+    }
+
+    private static void trySetTFAttribute(TransformerFactory factory, String attribute, Object value) {
+        try {
+            factory.setAttribute(attribute, value);
+        } catch (IllegalArgumentException e) {
+            LOGGER.debug("Unsupported TransformerFactory attribute: {}", attribute);
+        }
     }
 
     private static synchronized DocumentBuilder newBuilder() throws ParserConfigurationException {
