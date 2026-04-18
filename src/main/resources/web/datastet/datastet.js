@@ -45,10 +45,100 @@ var grobid = (function ($) {
      * span in the header. Datastet returns HTTP 503 while models warm up,
      * so a red circle during startup is expected — it goes green once
      * every classifier reports "loaded".
+     *
+     * The body of /service/health also carries a per-model breakdown
+     * (loaded/failed) that is rendered into #healthDetails in the About
+     * section, and summarised in the indicator's tooltip.
      */
     function startHealthCheck(intervalMs) {
         intervalMs = intervalMs || 30000;
         var url = defineBaseURL('health');
+
+        function parsePayload(jqXHR) {
+            if (!jqXHR || !jqXHR.responseText) return null;
+            try {
+                return JSON.parse(jqXHR.responseText);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function countKeys(obj) {
+            return obj && typeof obj === 'object' ? Object.keys(obj).length : 0;
+        }
+
+        function renderModelList(models) {
+            if (!models || typeof models !== 'object') return '';
+            var rows = '';
+            Object.keys(models).sort().forEach(function (name) {
+                var status = models[name];
+                rows += '<tr><td style="padding-right:12px;"><code>' + htmll(name) +
+                    '</code></td><td>' + htmll(String(status)) + '</td></tr>';
+            });
+            return rows;
+        }
+
+        function renderDetails(payload, httpStatusText) {
+            var $details = $('#healthDetails');
+            if ($details.length === 0) return;
+
+            if (!payload) {
+                $details.html('<p><small>Health endpoint ' + htmll(httpStatusText) +
+                    ' — no details available.</small></p>');
+                return;
+            }
+
+            var loaded = (payload.models && payload.models.loaded) || {};
+            var failed = (payload.models && payload.models.failed) || {};
+
+            var html = '<h5 style="margin-top:12px;">Service status';
+            html += payload.ready
+                ? ' <span style="color:#5cb85c;">(ready)</span>'
+                : ' <span style="color:#d9534f;">(not ready)</span>';
+            html += '</h5>';
+
+            if (countKeys(loaded) > 0) {
+                html += '<p style="margin:4px 0;"><b>Loaded models (' + countKeys(loaded) + ')</b></p>';
+                html += '<table class="table table-condensed" style="width:auto;margin-bottom:4px;"><tbody>' +
+                    renderModelList(loaded) + '</tbody></table>';
+            } else {
+                html += '<p><small>No classifier has reported loaded yet.</small></p>';
+            }
+
+            if (countKeys(failed) > 0) {
+                html += '<p style="margin:8px 0 4px;"><b style="color:#d9534f;">Failed models (' +
+                    countKeys(failed) + ')</b></p>';
+                html += '<table class="table table-condensed" style="width:auto;"><tbody>' +
+                    renderModelList(failed) + '</tbody></table>';
+            }
+
+            $details.html(html);
+        }
+
+        function applyState(jqXHR, wasSuccess) {
+            var $indicator = $('#healthIndicator');
+            if ($indicator.length === 0) return;
+
+            var payload = parsePayload(jqXHR);
+            var ok = wasSuccess && jqXHR.status === 200 && (!payload || payload.ready !== false);
+
+            var tooltip = 'Service status: ' +
+                (ok ? 'healthy' : (jqXHR.status ? 'HTTP ' + jqXHR.status : 'unreachable'));
+            if (payload) {
+                var loadedCount = countKeys(payload.models && payload.models.loaded);
+                var failedCount = countKeys(payload.models && payload.models.failed);
+                tooltip += ' — loaded ' + loadedCount;
+                if (failedCount > 0) tooltip += ', failed ' + failedCount;
+            }
+            tooltip += ' (checked ' + new Date().toLocaleTimeString() + ')';
+
+            $indicator.removeClass('health-checking health-unknown health-healthy health-unhealthy')
+                .addClass(ok ? 'health-healthy' : 'health-unhealthy')
+                .attr('title', tooltip);
+
+            renderDetails(payload, jqXHR.status ? 'returned HTTP ' + jqXHR.status : 'unreachable');
+        }
+
         function probe() {
             var $indicator = $('#healthIndicator');
             if ($indicator.length === 0) return;
@@ -60,16 +150,9 @@ var grobid = (function ($) {
                 cache: false,
                 timeout: 4000
             }).done(function (_data, _status, jqXHR) {
-                var ok = jqXHR.status === 200;
-                $indicator.removeClass('health-checking')
-                          .addClass(ok ? 'health-healthy' : 'health-unhealthy')
-                          .attr('title', 'Service status: ' + (ok ? 'healthy' : 'HTTP ' + jqXHR.status) +
-                                         ' (checked ' + new Date().toLocaleTimeString() + ')');
+                applyState(jqXHR, true);
             }).fail(function (jqXHR) {
-                $indicator.removeClass('health-checking').addClass('health-unhealthy')
-                          .attr('title', 'Service status: ' +
-                                         (jqXHR.status ? 'HTTP ' + jqXHR.status : 'unreachable') +
-                                         ' (checked ' + new Date().toLocaleTimeString() + ')');
+                applyState(jqXHR, false);
             });
         }
         probe();
