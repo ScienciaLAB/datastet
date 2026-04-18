@@ -116,37 +116,47 @@ var grobid = (function ($) {
         }
 
         function applyState(jqXHR, wasSuccess) {
-            var $indicator = $('#healthIndicator');
+            var $indicator = $('#health-indicator');
             if ($indicator.length === 0) return;
 
             var payload = parsePayload(jqXHR);
-            var ok = wasSuccess && jqXHR.status === 200 && (!payload || payload.ready !== false);
+            var hasFailedModels = payload && payload.models && countKeys(payload.models.failed) > 0;
+            var ok = payload ? (payload.ready && !hasFailedModels) : (wasSuccess && jqXHR.status === 200);
 
-            var tooltip = 'Service status: ' +
-                (ok ? 'healthy' : (jqXHR.status ? 'HTTP ' + jqXHR.status : 'unreachable'));
-            if (payload) {
-                var loadedCount = countKeys(payload.models && payload.models.loaded);
-                var failedCount = countKeys(payload.models && payload.models.failed);
-                tooltip += ' — loaded ' + loadedCount;
-                if (failedCount > 0) tooltip += ', failed ' + failedCount;
+            $indicator.removeClass('healthy unhealthy');
+
+            if (ok) {
+                $indicator.addClass('healthy');
+                var title = 'Service is ready';
+                if (payload) {
+                    title += ' — ' + countKeys(payload.models && payload.models.loaded) + ' model(s) loaded';
+                }
+                $indicator.attr('title', title);
+            } else {
+                $indicator.addClass('unhealthy');
+                var reasons = [];
+                if (!payload) {
+                    reasons.push(jqXHR.status ? 'HTTP ' + jqXHR.status : 'unreachable');
+                } else {
+                    if (!payload.ready) reasons.push('service not ready');
+                    if (hasFailedModels)
+                        reasons.push(countKeys(payload.models.failed) + ' model(s) failed to load');
+                }
+                var title = 'Service is not ready';
+                if (reasons.length > 0) title += ': ' + reasons.join(', ');
+                $indicator.attr('title', title);
             }
-            tooltip += ' (checked ' + new Date().toLocaleTimeString() + ')';
-
-            $indicator.removeClass('health-checking health-unknown health-healthy health-unhealthy')
-                .addClass(ok ? 'health-healthy' : 'health-unhealthy')
-                .attr('title', tooltip);
 
             renderDetails(payload, jqXHR.status ? 'returned HTTP ' + jqXHR.status : 'unreachable');
         }
 
         function probe() {
-            var $indicator = $('#healthIndicator');
+            var $indicator = $('#health-indicator');
             if ($indicator.length === 0) return;
-            $indicator.removeClass('health-unknown health-healthy health-unhealthy')
-                      .addClass('health-checking');
             $.ajax({
                 url: url,
                 method: 'GET',
+                dataType: 'json',
                 cache: false,
                 timeout: 4000
             }).done(function (_data, _status, jqXHR) {

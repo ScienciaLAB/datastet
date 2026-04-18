@@ -371,16 +371,17 @@ a.accordion-toggle{
     -webkit-transform: translateX(-50%) translateY(-10px) rotate(-45deg);
     top: 10px; }
 
-/* Service-health indicator shown in the page header.
-   .fa-circle colors are driven by the wrapping span's state class. */
-.health-indicator {
-    margin-left: 14px;
-    font-size: 0.65em;
-    vertical-align: middle;
-    cursor: help;
-    transition: color 0.3s ease-in-out;
+/* Service-health indicator dot — top-right corner, mirrors grobid's style. */
+#health-indicator {
+    position: absolute;
+    top: 25px;
+    right: 25px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: #999;
+    cursor: default;
+    transition: background-color 0.3s ease;
 }
-.health-indicator.health-unknown   { color: #cccccc; }
-.health-indicator.health-healthy   { color: #5cb85c; }
-.health-indicator.health-unhealthy { color: #d9534f; }
-.health-indicator.health-checking  { color: #f0ad4e; }
+#health-indicator.healthy { background-color: #27ae60; }
+#health-indicator.unhealthy { background-color: #e74c3c; }
