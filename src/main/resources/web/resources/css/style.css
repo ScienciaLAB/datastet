@@ -63,6 +63,7 @@ body {
 }
 
 .page-header {
+  position: relative;
   background-color: #f5f5f5;
   padding: 20px 20px 10px;
   margin: -20px -20px 20px;
@@ -371,17 +372,16 @@ a.accordion-toggle{
     -webkit-transform: translateX(-50%) translateY(-10px) rotate(-45deg);
     top: 10px; }
 
-/* Service-health indicator dot — top-right corner, mirrors grobid's style. */
+/* Service-health indicator dot — top-right of page header. */
 #health-indicator {
-    position: fixed;
-    top: 25px;
-    right: 25px;
+    position: absolute;
+    top: 18px;
+    right: 20px;
     width: 14px;
     height: 14px;
     border-radius: 50%;
     background-color: #999;
     cursor: default;
-    z-index: 1000;
     transition: background-color 0.3s ease;
 }
 #health-indicator.healthy { background-color: #27ae60; }
