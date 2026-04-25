@@ -3,8 +3,7 @@
     <head>
         <meta charset="utf-8">
         <title>Dataset Identification and Classification Web Application</title>
-        <link rel="icon" type="image/x-icon" href="resources/img/favicon.ico"/> 
-        <link rel="shortcut icon" type="image/x-icon" href="resources/img/favicon.ico"/>
+        <link rel="icon" type="image/x-icon" href="resources/img/favicon.ico"/>
 
         <!--script type="text/javascript" src="resources/js/jquery-1.10.0.min.js"></script> 
         <script type="text/javascript" src="resources/js/jquery.form.js"></script>
@@ -58,9 +57,10 @@
           <div class="content">  
             
             <div class="page-header">
+                 <span id="health-indicator" title="Checking service status..."></span>
                  <h1><span style="color:#333;">Datasets
-                     <span style="padding-left:40px;color:#AE0C0C;">        
-        <h2><small> 
+                     <span style="padding-left:40px;color:#AE0C0C;">
+        <h2><small>
             <a class="section-active" id="about" href="#">About</a> 
                 <span style="padding-left:20px;">&nbsp;</span> 
             <!--a class="section-active" id="demo" href="#">Demo</a> 
@@ -77,10 +77,11 @@
                 <tr>
                 <td style="width:100px;align:left;vertical-align: top;"><h4><span id="subTitle"></span></h4></td> 
                 <td style="align:left;vertical-align: top;">
-                    <div id="divAbout"> 
+                    <div id="divAbout">
                         <p><large><b>DataStet</b> - Dataset mention extraction and characterization</p>
-                        <p>This is an open source project available on <a href="https://github.com/kermitt2/datastet" target=_blank>GitHub</a> under <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache 2 License</a>. </p>    
-                        <p></p> 
+                        <p>This is an open source project available on <a href="https://github.com/kermitt2/datastet" target=_blank>GitHub</a> under <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache 2 License</a>. </p>
+                        <p></p>
+                        <div id="healthDetails"></div>
                     </div>   
                     <div id="divDoc"> 
                         <p>This demo is based on the JSON REST services.</p> 

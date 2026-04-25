@@ -11,13 +11,13 @@ var grobid = (function ($) {
     var entities = null;
 
     // for complete Wikidata concept information, resulting of additional calls to the knowledge base service
-    var conceptMap = new Object();
+    var conceptMap = {};
 
     // store the current entities extracted by the service
-    var entityMap = new Object();
+    var entityMap = {};
 
     // store the references attached to the entities and extracted by the service
-    var referenceMap = new Object();
+    var referenceMap = {};
 
     function defineBaseURL(ext) {
         var baseUrl = null;
@@ -40,12 +40,143 @@ var grobid = (function ($) {
         $('#gbdForm').attr('action', baseUrl);
     }
 
+    /**
+     * Polls /service/health and reflects the result on the #healthIndicator
+     * span in the header. Datastet returns HTTP 503 while models warm up,
+     * so a red circle during startup is expected — it goes green once
+     * every classifier reports "loaded".
+     *
+     * The body of /service/health also carries a per-model breakdown
+     * (loaded/failed) that is rendered into #healthDetails in the About
+     * section, and summarised in the indicator's tooltip.
+     */
+    function startHealthCheck(intervalMs) {
+        intervalMs = intervalMs || 30000;
+        var url = defineBaseURL('health');
+
+        function parsePayload(jqXHR) {
+            if (!jqXHR || !jqXHR.responseText) return null;
+            try {
+                return JSON.parse(jqXHR.responseText);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function countKeys(obj) {
+            return obj && typeof obj === 'object' ? Object.keys(obj).length : 0;
+        }
+
+        function renderModelList(models) {
+            if (!models || typeof models !== 'object') return '';
+            var rows = '';
+            Object.keys(models).sort().forEach(function (name) {
+                var status = models[name];
+                rows += '<tr><td style="padding-right:12px;"><code>' + htmll(name) +
+                    '</code></td><td>' + htmll(String(status)) + '</td></tr>';
+            });
+            return rows;
+        }
+
+        function renderDetails(payload, httpStatusText) {
+            var $details = $('#healthDetails');
+            if ($details.length === 0) return;
+
+            if (!payload) {
+                $details.html('<p><small>Health endpoint ' + htmll(httpStatusText) +
+                    ' — no details available.</small></p>');
+                return;
+            }
+
+            var loaded = (payload.models && payload.models.loaded) || {};
+            var failed = (payload.models && payload.models.failed) || {};
+
+            var html = '<h5 style="margin-top:12px;">Service status';
+            html += payload.ready
+                ? ' <span style="color:#5cb85c;">(ready)</span>'
+                : ' <span style="color:#d9534f;">(not ready)</span>';
+            html += '</h5>';
+
+            if (countKeys(loaded) > 0) {
+                html += '<p style="margin:4px 0;"><b>Loaded models (' + countKeys(loaded) + ')</b></p>';
+                html += '<table class="table table-condensed" style="width:auto;margin-bottom:4px;"><tbody>' +
+                    renderModelList(loaded) + '</tbody></table>';
+            } else {
+                html += '<p><small>No classifier has reported loaded yet.</small></p>';
+            }
+
+            if (countKeys(failed) > 0) {
+                html += '<p style="margin:8px 0 4px;"><b style="color:#d9534f;">Failed models (' +
+                    countKeys(failed) + ')</b></p>';
+                html += '<table class="table table-condensed" style="width:auto;"><tbody>' +
+                    renderModelList(failed) + '</tbody></table>';
+            }
+
+            $details.html(html);
+        }
+
+        function applyState(jqXHR, wasSuccess) {
+            var $indicator = $('#health-indicator');
+            if ($indicator.length === 0) return;
+
+            var payload = parsePayload(jqXHR);
+            var hasFailedModels = payload && payload.models && countKeys(payload.models.failed) > 0;
+            var ok = payload ? (payload.ready && !hasFailedModels) : (wasSuccess && jqXHR.status === 200);
+
+            $indicator.removeClass('healthy unhealthy');
+
+            if (ok) {
+                $indicator.addClass('healthy');
+                var title = 'Service is ready';
+                if (payload) {
+                    title += ' — ' + countKeys(payload.models && payload.models.loaded) + ' model(s) loaded';
+                }
+                $indicator.attr('title', title);
+            } else {
+                $indicator.addClass('unhealthy');
+                var reasons = [];
+                if (!payload) {
+                    reasons.push(jqXHR.status ? 'HTTP ' + jqXHR.status : 'unreachable');
+                } else {
+                    if (!payload.ready) reasons.push('service not ready');
+                    if (hasFailedModels)
+                        reasons.push(countKeys(payload.models.failed) + ' model(s) failed to load');
+                }
+                var title = 'Service is not ready';
+                if (reasons.length > 0) title += ': ' + reasons.join(', ');
+                $indicator.attr('title', title);
+            }
+
+            renderDetails(payload, jqXHR.status ? 'returned HTTP ' + jqXHR.status : 'unreachable');
+        }
+
+        function probe() {
+            var $indicator = $('#health-indicator');
+            if ($indicator.length === 0) return;
+            $.ajax({
+                url: url,
+                method: 'GET',
+                dataType: 'json',
+                cache: false,
+                timeout: 4000
+            }).done(function (_data, _status, jqXHR) {
+                applyState(jqXHR, true);
+            }).fail(function (jqXHR) {
+                applyState(jqXHR, false);
+            });
+        }
+        probe();
+        setInterval(probe, intervalMs);
+    }
+
     $(document).ready(function () {
 
         $("#subTitle").html("About");
         $("#divAbout").show();
         $("#divRestI").hide();
         $("#divDoc").hide();
+
+        startHealthCheck();
 
         createInputTextArea();
 
@@ -109,20 +240,19 @@ var grobid = (function ($) {
 
     function ShowRequest(formData, jqForm, options) {
         var queryString = $.param(formData);
-        $('#infoResult').html('<font color="red">Requesting server...</font>');
+        $('#infoResult').html('<span style="color:grey;"><i class="fa fa-spinner fa-spin"></i> Requesting server\u2026</span>');
         return true;
     }
 
     function AjaxError(jqXHR, textStatus, errorThrown) {
-        $('#infoResult').html("<font color='red'>Error encountered while requesting the server.<br/>" + jqXHR.responseText + "</font>");
+        var responseText = (jqXHR && jqXHR.responseText) ? htmll(String(jqXHR.responseText)) : "";
+        $('#infoResult').html("<span style='color:red;'>Error encountered while requesting the server.<br/>" + responseText + "</span>");
         entities = null;
     }
 
     function AjaxError3(message) {
-        if (!message)
-            message = "";
-        message += " - The PDF document cannot be annotated. Please check the server logs.";
-        $('#infoResult').html("<font color='red'>Error encountered while requesting the server.<br/>"+message+"</font>");
+        var safeMessage = htmll(String(message || ""));
+        $('#infoResult').html("<span style='color:red;'>Error encountered while requesting the server.<br/>" + safeMessage + " - The PDF document cannot be annotated. Please check the server logs.</span>");
         entities = null;
         return true;
     }
@@ -132,13 +262,13 @@ var grobid = (function ($) {
     }
 
     function submitQuery() {
-        $('#infoResult').html('<font color="grey">Requesting server...</font>');
+        $('#infoResult').html('<span style="color:grey;"><i class="fa fa-spinner fa-spin"></i> Requesting server\u2026</span>');
         $('#requestResult').html('');
 
         // re-init the entity map
-        entityMap = new Object();
-        conceptMap = new Object();
-        referenceMap = new Object();
+        entityMap = {};
+        conceptMap = {};
+        referenceMap = {};
 
         var selected = $('#selectedService option:selected').attr('value');
         var urlLocal = $('#gbdForm').attr('action');
@@ -763,7 +893,7 @@ var grobid = (function ($) {
                         type_map[datasetNameRaw] = entity['type']
 
                     if (!local_map.has(datasetNameRaw)) 
-                        local_map.set(datasetNameRaw, new Array());
+                        local_map.set(datasetNameRaw, []);
                     
                     var localArray = local_map.get(datasetNameRaw)
                     localArray.push(the_id)
@@ -776,7 +906,7 @@ var grobid = (function ($) {
                 }
             });
 
-            var span_ids = new Array();
+            var span_ids = [];
 
             var allTableContentNamed = "";
             var allTableContentImplicit = "";
