@@ -136,7 +136,6 @@ server:
       port: 8061
   registerDefaultExceptionMappers: false
   maxThreads: 2048
-  maxQueuedRequests: 2048
 
   requestLog:
     appenders: []
