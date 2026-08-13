@@ -40,6 +40,39 @@ var grobid = (function ($) {
         $('#gbdForm').attr('action', baseUrl);
     }
 
+    var REPOSITORY_URL = 'https://github.com/ScienciaLAB/datastet';
+
+    /**
+     * Shows the running version in the footer, with the git revision linking to the commit it
+     * was built from. Both come from /service/version; the revision is 'unknown' when the build
+     * could not reach git, in which case only the version is shown.
+     */
+    function fetchVersion() {
+        $.ajax({
+            type: 'GET',
+            url: defineBaseURL('version'),
+            dataType: 'json',
+            success: function (data) {
+                if (!data || !data.version) {
+                    return;
+                }
+                var versionHtml = '- version: ' + data.version;
+                if (data.revision && data.revision !== 'unknown') {
+                    // 'v1.0.0-25-gabc1234' -> link on the commit sha, label keeps the full
+                    // describe; with no tag reachable the revision is already a bare sha
+                    var commitHash = data.revision;
+                    var match = data.revision.match(/-\d+-g([0-9a-f]+)$/);
+                    if (match) {
+                        commitHash = match[1];
+                    }
+                    versionHtml += ' (<a href="' + REPOSITORY_URL + '/commit/' + encodeURIComponent(commitHash) +
+                        '" target="_blank" style="color:#848484;">' + data.revision + '</a>)';
+                }
+                $('#grobid-version').html(versionHtml);
+            }
+        });
+    }
+
     /**
      * Polls /service/health and reflects the result on the #healthIndicator
      * span in the header. Datastet returns HTTP 503 while models warm up,
@@ -176,6 +209,7 @@ var grobid = (function ($) {
         $("#divRestI").hide();
         $("#divDoc").hide();
 
+        fetchVersion();
         startHealthCheck();
 
         createInputTextArea();
